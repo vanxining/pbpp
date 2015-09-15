@@ -4,51 +4,66 @@ import Types
 def from_xml(root, node):
     arg = Argument()
     arg.parse_xml(root, node)
+
     return arg
 
 
 class Argument:
     """Represents function argument as well as return type.
     """
-    _unnamed_counter = 0
 
-    def __init__(self, ctype=None, name=None, defv=None):
+    _predefined = (
+        # argument common
+        "self", "args", "kwargs",
+
+        # function common
+        "obj", "exceptions", "exdtor", "_saved", # wxPyBeginAllowThreads
+        "i", "cnt",  # loop iterator
+
+        # virtual function
+        "py_method", "py_method_name", "_blocker",
+        "vm_retval", "py_vm_retval",
+
+        # getter & setter
+        "py_value", "py_closure",
+    )
+
+    def __init__(self, ctype=None, name=None, defv=None, internal=False):
         assert ctype is None or isinstance(ctype, Types.Type)
 
         self.type = ctype
-        self.name = name
+        self._set_name(name, internal)
         self.defv = defv
 
-    def join_type_and_name(self):
-        return self.type.declate_var(self.name, init=None)[:-1]
+    def _set_name(self, name, internal=False):
+        self.raw_name = name
+        if internal or name not in Argument._predefined:
+            self.name = name
+        else:
+            self.name = name + '0'
 
     def parse_xml(self, root, node):
-        self.type = Types.get_type_from_id(node.attrib["type"], root)
-        self.name = self._name(node)
-        self.defv = self._defv(node)
+        self.type = Types.get_type_by_id(node.attrib["type"], root)
+        self._set_name(self._name_from_xml(node))
+        self.defv = self._defv_from_xml(node)
+
+    def join_type_and_name(self):
+        return self.type.declare_var(self.name, init=None)[:-1]
 
     @staticmethod
-    def _name(node):
-        if "name" in node.attrib:
-            return node.attrib["name"]
-        else:
-            Argument._unnamed_counter += 1
-            return "_unused_%d" % Argument._unnamed_counter
+    def _name_from_xml(node):
+        return node.attrib.get("name", "")
 
     @staticmethod
-    def _defv(node):
-        if "default" in node.attrib:
-            return node.attrib["default"]
-        else:
-            return None
+    def _defv_from_xml(node):
+        return node.attrib.get("default")
 
 if __name__ == "__main__":
     import xml.etree.ElementTree as ET
 
-    _root = ET.parse("wx.xml").getroot()
+    _root = ET.parse("Console/Raw/Xml/V.xml").getroot()
 
-    for _node in _root.findall("ReferenceType") + _root.findall("PointerType"):
-        _ctype = Types.get_type_from_id(_node.attrib["id"], _root)
-        print "%s: %s[%s]" % (_node.attrib["id"],
-                              _ctype.decl(),
-                              _ctype.decl_no_const())
+    n = _root.find(".//Method[@id='_185']")[0]
+    a = from_xml(_root, n)
+
+    print a.type.declare_var(a.name, a.defv)

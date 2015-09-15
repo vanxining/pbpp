@@ -1,9 +1,12 @@
 import Code.Snippets
+import CodeBlock
+import Converters
+import HeaderJar
+import Session
 import Util
 
 from collections import deque
 
-#---------------------------------------------------------------------------#
 
 BUILT_IN = 1
 REFERENCE = 2
@@ -12,27 +15,49 @@ CLASS = 4
 
 
 class Type:
-    def __init__(self, decl_list, tag):
+    def __init__(self, decl_list, tid, tag):
         assert isinstance(decl_list, (list, tuple, deque,))
         assert len(decl_list) > 0
+        assert isinstance(tid, int)
         assert isinstance(tag, str)
 
         self.decl_list = decl_list
         self.decl_list_no_const = [d for d in decl_list if d != "const"]
+        self.tid = tid
         self.tag = tag
 
+        self.cvt = Converters.find(self)
+
+    def __str__(self):
+        return self.decl()
+
     def decl(self):
-        return self._fmt(' '.join(self.decl_list))
+        return self._decl(self.decl_list)
 
     def decl_no_const(self):
-        return self._fmt(' '.join(self.decl_list_no_const))
+        return self._decl(self.decl_list_no_const)
+
+    def _decl(self, decl_list):
+        if self.is_function_pointer():
+            return "__FP_%d" % self.tid
+
+        return self._fmt(' '.join(decl_list))
 
     @staticmethod
     def _fmt(decl):
-        return decl.replace("* ", "*")
+        return decl.replace("* ", "*").replace("& ", "&")
 
     def intrinsic_type(self):
         return self.decl_list[0]
+
+    def has_decorators(self):
+        return len(self.decl_list) > 1
+
+    def typedef(self, typename):
+        if self.is_function_pointer():
+            return "typedef %s;" % typename.join(self.decl_list)
+        else:
+            return "typedef %s;" % self.declare_var(typename)
 
     def category(self):
         if self.is_built_in():
@@ -50,28 +75,50 @@ class Type:
     def is_enum(self):
         return self.tag == "Enumeration"
 
+    def is_function_pointer(self):
+        return self.tag in ("FunctionType", "MethodType")
+
     def is_ptr_or_ref(self):
         return self.is_ref() or self.is_ptr()
+
+    def is_ptr(self):
+        return self.decl_list_no_const[-1] == '*' or self.is_function_pointer()
 
     def is_ref(self):
         return self.decl_list_no_const[-1] == '&'
 
-    def is_ptr(self):
-        return self.decl_list_no_const[-1] == '*'
-
     def is_built_in(self):
-        return self.is_enum() or ((
+        return self.is_enum() or (
             len(self.decl_list_no_const) == 1 and
             self.decl_list_no_const[0] in _built_in
-        ))
+        )
 
     def is_trivial(self):
         if self.is_built_in():
             return True
 
+        if self.is_function_pointer():
+            return True
+
         if self.is_ptr_or_ref():
             secondary_decl = self.decl_list_no_const[-2]
             if secondary_decl in _built_in or secondary_decl in "&*":
+                return True
+
+        return False
+
+    def is_pyobject_ptr(self):
+        return self.decl_no_const() == "PyObject *"
+
+    def is_class_value(self):
+        return not self.is_ptr_or_ref() and not self.is_trivial()
+
+    def is_const(self):
+        if self.decl_list[-1] == "const":
+            return True
+
+        if len(self.decl_list) >= 3:
+            if self.decl_list[-2] == "const" and self.decl_list[-1] in ("&", "*",):
                 return True
 
         return False
@@ -85,7 +132,7 @@ class Type:
                 ret[index] = '*'
                 break
 
-        return Type(ret, self.tag)
+        return Type(ret, self.tid, self.tag)
 
     def get_specifier(self):
         if self.is_built_in():
@@ -94,139 +141,280 @@ class Type:
             else:
                 return _built_in[self.decl_no_const()]["specifier"]
         else:
-            return "O!"
+            return "O" if self.is_ptr() else "O!"
 
-    def join_type_and_name(self, name):
-        if self.decl_list[-1] in "&*":
-            return self.decl() + name
+    def join_type_and_name(self, name, strip_last_const=False):
+        decl = self.decl()
+
+        if strip_last_const:
+            if decl.endswith("const") and decl[-6] in "*& ":
+                decl = decl[:((-5) if decl[-6] != ' ' else (-6))]
+
+        if decl[-1] in "&*":
+            return decl + name
         else:
-            return "%s %s" % (self.decl(), name)
+            return "%s %s" % (decl, name)
 
-    def declate_var(self, name, init=None):
-        decl = self.join_type_and_name(name)
+    def declare_var(self, name, init=None, strip_last_const=True):
+        decl = self.join_type_and_name(name, strip_last_const)
 
         if init is not None:
             if self.category() == CLASS:
                 return decl + "(%s);" % init
             else:
+                if self.is_enum():
+                    intrinsic = self.intrinsic_type()
+                    pos = intrinsic.rfind("::")
+                    if pos != -1:
+                        ns = intrinsic[:(pos + 2)]
+                        init = ns + init
+
                 return decl + " = %s;" % init
         else:
             return decl + ";"
 
-    def get_build_value_idecl(self, var_name, namer=None):
-        if self.is_built_in():
-            ret = "PyObject *py_%s = " % var_name
+    def get_build_value_idecl(self, var_name, py_var_name=None, namer=None, raii=False):
+        assert not self.is_pyobject_ptr()
+
+        if py_var_name is None:
+            if '.' in var_name:
+                intrinsic_name = var_name[(var_name.rindex('.') + 1):]
+            elif "->" in var_name:
+                intrinsic_name = var_name[(var_name.rindex('>') + 1):]
+            else:
+                intrinsic_name = var_name
+
+            py_var_name = "py_" + intrinsic_name
+
+        if self.cvt:
+            Session.header_jar().add_headers(self.cvt.additional_headers(self))
+            return self.cvt.build(self, var_name, py_var_name, namer, raii)
+        elif self.is_built_in():
             if self.is_enum():
                 builder = _built_in["int"]["builder"]
             else:
                 builder = _built_in[self.decl_no_const()]["builder"]
 
-            return ret + builder + "(%s);" % var_name
+            if raii:
+                return "PyObjectPtr %s(%s(%s));" % (py_var_name, builder, var_name)
+            else:
+                return "PyObject *%s = %s(%s);" % (py_var_name, builder, var_name)
         elif self.is_ptr_or_ref():
-            if self.is_trivial():
-                addr = "&(%s)"
-                if self.is_ptr():
-                    addr = addr[1:]
+            if self.is_ref():
+                ptr = "&%s" % var_name if var_name.isalnum() else "&(%s)" % var_name
+                ref = var_name
+            else:
+                ptr = var_name
+                ref = "*%s" % var_name if var_name.isalnum() else "*(%s)" % var_name
 
-                return Code.Snippets.PyCapsule_New % (
-                    var_name, addr % var_name, self.decl_no_const()
-                )
+            if self.is_trivial():
+                template_args = {
+                    "VAR": ptr,
+                    "PY_VAR_NAME": py_var_name,
+                    "TYPE_STR": self.decl_no_const(),
+                }
+
+                if raii:
+                    return Code.Snippets.PyCapsule_New_RAII % template_args
+                else:
+                    return Code.Snippets.PyCapsule_New % template_args
             else:
                 assert namer
 
+                boilerplate = Code.Snippets.borrow_from_ptr
                 if self.is_ref():
-                    addr = '&' + var_name
-                    ref = var_name
-                else:
-                    addr = var_name
-                    ref = '*' + var_name
+                    if raii:
+                        boilerplate = Code.Snippets.borrow_from_ref_raii
+                    else:
+                        boilerplate = Code.Snippets.borrow_from_ref
 
-                return Code.Snippets.wrap_nontrivial_borrowed_ref % {
-                    "VAR_NAME": var_name,
-                    "REF": ref, "ADDR": addr,
-                    "WRAPT": namer.wrapper_class(self.intrinsic_type()),
-                    "PYOBJ_STRUCT": namer.pyobj(self.intrinsic_type()),
-                    "PYTYPE": namer.pytype(self.intrinsic_type()),
+                ret = boilerplate % {
+                    "VAR": var_name,
+                    "PY_VAR_NAME": py_var_name,
+                    "PTR": ptr, "REF": ref,
+                    "CLASS": self.intrinsic_type(),
+                    "BORROWER": namer.borrower(self.intrinsic_type()),
                 }
+
+                if self.is_ptr():
+                    if raii:
+                        ret += "\nPyObjectPtr %s(%s_raw);" %(py_var_name, py_var_name)
+                    else:
+                        ret += "\nPyObject *%s = %s_raw;" %(py_var_name, py_var_name)
+
+                return ret
         else:
             assert namer
 
-            return Code.Snippets.return_by_value % {
-                "VAR_NAME": var_name,
+            boilerplate = Code.Snippets.copy_raii if raii else Code.Snippets.copy
+            return boilerplate % {
+                "VAR": var_name, "PY_VAR_NAME": py_var_name,
                 "CLASS": self.intrinsic_type(),
-                "CLS_EMBBEDED": namer.to_python(self.intrinsic_type()),
+                "COPYER": namer.copyer(self.intrinsic_type()),
             }
 
+    def get_extractor_code(self, var_name, py_var_name, error_return, namer=None):
+        block = CodeBlock.CodeBlock()
 
-class Registry:
+        if self.is_ptr():
+            block.write_code(self.declare_var(var_name, "nullptr"))
+            block.write_code("if (%s != Py_None) {" % py_var_name)
+            block.indent()
+
+        if self.cvt is not None:
+            Session.header_jar().add_headers(self.cvt.additional_headers(self))
+
+            negative_checker = self.cvt.negative_checker(self, "(PyObject *) " + py_var_name)
+            extracting_code = self.cvt.extracting_code(self, var_name, py_var_name, error_return, namer)
+        elif self.is_built_in():
+            if self.is_enum():
+                dummy_type = "int"
+            else:
+                dummy_type = self.decl_no_const()
+
+            negative_checker = "!%s((PyObject *) %s)" % (_built_in[dummy_type]["checker"], py_var_name)
+
+            if self.is_bool():
+                extracting_code = self.declare_var(var_name, extract_as_bool(py_var_name))
+            else:
+                extracting_code = Code.Snippets.extract_builtin_type % {
+                    "CAST_ENUM": "(%s) " % self.decl() if self.is_enum() else "",
+                    "EXTRACTOR": _built_in[dummy_type]["extractor"],
+                    "VAR_TYPE": self.decl(),
+                    "PY_VAR_NAME": py_var_name,
+                    "VAR_NAME": var_name,
+                }
+        elif self.is_trivial():
+            negative_checker = '!PyCapsule_IsValid(%s, "%s")' % (
+                py_var_name, self.decl_no_const(),
+            )
+
+            extracting_code = '%s = (%s) PyCapsule_GetPointer(%s, "%s");' % (
+                var_name, self.decl(), py_var_name, self.decl_no_const(),
+            )
+        else:
+            pytype = namer.pytype(self.intrinsic_type())
+            block.write_code("extern PyTypeObject %s;" % pytype)
+
+            negative_checker = "!PyObject_TypeCheck(%s, &%s)" % (py_var_name, pytype)
+
+            if not self.is_ptr():
+                extracting_code = self.declare_var(var_name,
+                    '*' + Code.Snippets.external_type_real_ptr % {
+                        "CLASS": self.intrinsic_type(),
+                        "PYOBJ_PTR": py_var_name,
+                    })
+            else:
+                extracting_code = (var_name + " = " +
+                   Code.Snippets.external_type_real_ptr % {
+                        "CLASS": self.intrinsic_type(),
+                        "PYOBJ_PTR": py_var_name,
+                    } + ';')
+
+        block.write_code(Code.Snippets.single_var_extractor % {
+            "NEGATIVE_CHECKER": negative_checker,
+            "VAR_TYPE": self.decl(),
+            "PY_VAR_NAME": py_var_name,
+            "VAR_NAME": var_name,
+            "ERROR_RETURN": error_return,
+            "EXTRACTING_CODE": extracting_code,
+        })
+
+        if self.is_ptr():
+            block.unindent()
+            block.write_code('}')
+
+        return block.flush()
+
+
+class PythonAwareClassRegistry:
 
     _registry = {}
-    _black_list = set()
 
     def __init__(self):
         pass
 
     @staticmethod
-    def get(item, default=None):
-        return Registry._registry.get(item, default)
+    def add(cls_name, interfaces):
+        PythonAwareClassRegistry._registry[cls_name] = interfaces
 
     @staticmethod
-    def load_from_file(path):
-        raise NotImplementedError
-
-    @staticmethod
-    def save_to_file(path):
-        raise NotImplementedError
-
-    @staticmethod
-    def add(tp):
-        assert isinstance(tp, Type)
-
-        if tp.decl() not in Registry._black_list:
-            Registry._registry[tp.decl()] = tp
-
-    @staticmethod
-    def add_to_black_list(lst):
-        assert isinstance(lst, (list, tuple))
-
-        for cls in lst:
-            Registry._black_list.add(cls)
+    def find(cls_name):
+        return PythonAwareClassRegistry._registry.get(cls_name)
 
 
 def _get_node_by_id(node_id, root):
     return root.find(".//*[@id='%s']" % node_id)
 
 
-def _is_function_pointer(node, root):
+def _flatize_function_pointer(node, root):
+    returns = get_type_by_id(node.attrib["returns"], root)
+
+    if "basetype" in node.attrib:
+        tp = get_type_by_id(node.attrib["basetype"], root)
+        basetype = tp.decl() + "::"
+    else:
+        basetype = ""
+
+    if "const" in node.attrib:
+        const = " const"
+    else:
+        const = ""
+
+    args = []
+    for arg in node.findall("Argument"):
+        args.append(get_type_by_id(arg.attrib["type"], root))
+
+    decl_list = ("%s (%s*" % (returns.decl(), basetype),
+                 ")(%s)%s" % (", ".join([arg.decl() for arg in args]), const))
+
+    return decl_list
+
+
+def _try_as_function_pointer(node_id, root):
+    node = _get_node_by_id(node_id, root)
+
+    if node is None:
+        msg = "Fatal error: no XML node with id `%s` found!" % node_id
+        raise Exception(msg)
+
     while "type" in node.attrib:
         node = _get_node_by_id(node.attrib["type"], root)
 
-    return node.tag in ("FunctionType", "MethodType")
+    if node.tag in ("FunctionType", "MethodType"):
+        decl_list = _flatize_function_pointer(node, root)
+        tid = int(node.attrib["id"][1:])
+
+        return Type(decl_list, tid, node.tag)
+    else:
+        return None
 
 
-def get_type_from_id(type_node_id, root):
+def get_type_by_id(type_node_id, root):
     assert isinstance(type_node_id, str)
     assert root is not None
 
     decl = deque()
 
-    while True:
+    tp = _try_as_function_pointer(type_node_id, root)
+
+    while not tp:
         node = _get_node_by_id(type_node_id, root)
 
-        if _is_function_pointer(node, root):
-            raise RuntimeError("Function pointer / pointer to member "
-                               "is not supported yet.")
-
-        if "name" not in node.attrib:
+        if type_node_id.endswith('c'):
+            decl.appendleft("const")
+        elif "name" not in node.attrib or node.tag == "Typedef":
             if node.tag == "ReferenceType":
                 decl.appendleft('&')
             elif node.tag == "PointerType":
                 decl.appendleft('*')
-
-            type_node_id = node.attrib["type"]
-            if type_node_id.endswith('c'):
-                type_node_id = type_node_id[:-1]
-                decl.appendleft("const")
+            elif node.tag == "ArrayType":
+                if len(decl) > 0 and decl[0] == "const":
+                    decl.popleft()
+                    decl.appendleft('*')
+                    decl.appendleft("const")
+                else:
+                    decl.appendleft('*')
         else:
             if "context" in node.attrib:
                 name = Util.full_name_of(node, root)
@@ -235,81 +423,124 @@ def get_type_from_id(type_node_id, root):
 
             decl.appendleft(name)
 
-            tp = Type(decl, node.tag)
-            Registry.add(tp)
+            tp = Type(decl, int(node.attrib["id"][1:]), node.tag)
+            break
 
-            return tp
+        type_node_id = node.attrib["type"]
+
+    return tp
+
+
+def declaring_to_assigning(tp, var_name, code):
+    decl = tp.join_type_and_name(var_name)
+    pos = code.rindex(decl) + len(decl)
+
+    if code[pos] == ';':
+        pos += 2
+        beg = pos - len(decl)
+        while beg > 0 and code[beg] != '\n':
+            beg -= 1
+
+        return code[:beg] + code[pos:]
+    elif code[pos:].startswith(" = "):
+        repl = var_name
+    else:
+        repl = var_name + " = "
+
+    pos -= len(decl)
+    return code[:pos] + code[pos:].replace(decl, repl)
 
 
 _built_in = {
     "char": {
         "specifier": 'c',
-        "builder": "PyLong_FromLong",
-        "extractor": "_PyInt_AsInt",
-        "checker": "PyInt_Check",
+        "builder": "PyInt_FromLong",
+        "extractor": "pbpp::Types::ToChar",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "unsigned char": {
         "specifier": 'B',
+        "builder": "PyInt_FromLong",
+        "extractor": "pbpp::Types::ToUnsignedChar",
+        "checker": "pbpp::Types::IsNumber",
+    },
+
+    "wchar_t": {
+        "specifier": 'I',
         "builder": "PyLong_FromUnsignedLong",
-        "extractor": "PyInt_AsUnsignedLongMask",
-        "checker": "PyInt_Check",
+        "extractor": "pbpp::Types::ToWChar",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "short int": {
         "specifier": 'h',
-        "builder": "PyLong_FromLong",
-        "extractor": "_PyInt_AsInt",
-        "checker": "PyInt_Check",
+        "builder": "PyInt_FromLong",
+        "extractor": "pbpp::Types::ToShort",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "short unsigned int": {
         "specifier": 'H',
-        "builder": "PyLong_FromUnsignedLong",
-        "extractor": "PyInt_AsUnsignedLongMask",
-        "checker": "PyInt_Check",
+        "builder": "PyInt_FromLong",
+        "extractor": "pbpp::Types::ToUnsignedShort",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "int": {
         "specifier": 'i',
-        "builder": "PyLong_FromLong",
-        "extractor": "_PyInt_AsInt",
-        "checker": "PyInt_Check",
+        "builder": "PyInt_FromLong",
+        "extractor": "pbpp::Types::ToInt",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "unsigned int": {
         "specifier": 'I',
         "builder": "PyLong_FromUnsignedLong",
-        "extractor": "PyInt_AsUnsignedLongMask",
-        "checker": "PyInt_Check",
+        "extractor": "pbpp::Types::ToUnsignedInt",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "long int": {
         "specifier": 'l',
         "builder": "PyLong_FromLong",
-        "extractor": "PyInt_AS_LONG",
-        "checker": "PyInt_Check",
+        "extractor": "pbpp::Types::ToLong",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "long unsigned int": {
         "specifier": 'k',
         "builder": "PyLong_FromUnsignedLong",
-        "extractor": "PyInt_AsUnsignedLongMask",
-        "checker": "PyInt_Check",
+        "extractor": "pbpp::Types::ToUnsignedLong",
+        "checker": "pbpp::Types::IsNumber",
+    },
+
+    "long long int": {
+        "specifier": 'L',
+        "builder": "PyLong_FromLongLong",
+        "extractor": "pbpp::Types::ToLongLong",
+        "checker": "pbpp::Types::IsNumber",
+    },
+
+    "long long unsigned int": {
+        "specifier": 'L',
+        "builder": "PyLong_FromUnsignedLongLong",
+        "extractor": "pbpp::Types::ToUnsignedLongLong",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "float": {
         "specifier": 'f',
         "builder": "PyFloat_FromDouble",
-        "extractor": "PyFloat_AS_DOUBLE",
-        "checker": "PyFloat_Check",
+        "extractor": "pbpp::Types::ToDouble",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "double": {
         "specifier": 'd',
         "builder": "PyFloat_FromDouble",
-        "extractor": "PyFloat_AS_DOUBLE",
-        "checker": "PyFloat_Check",
+        "extractor": "pbpp::Types::ToDouble",
+        "checker": "pbpp::Types::IsNumber",
     },
 
     "bool": {
@@ -318,64 +549,190 @@ _built_in = {
         "checker": "PyBool_Check",
     },
 
+    "void": {
+
+    },
 }
+
+# `signed char` is another type different with `char`
+_built_in["signed char"] = _built_in["char"]
 
 
 def extract_as_bool(pyobj):
     return "(PyObject_IsTrue(%s) == 1)" % pyobj
 
 
+class _BlockStream(CodeBlock.CodeBlock):
+    def __init__(self):
+        CodeBlock.CodeBlock.__init__(self)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        print(self.flush())
+        print("------------")
+
+
 def _test():
-    tp = Type(("long int",), "FundamentalType")
+    print("----------------------------")
+    print("--------- _test()  ---------")
+    print("----------------------------")
 
-    print tp.get_build_value_idecl("x")
-    print ""
+    with _BlockStream() as block:
+        tp = Type(("long int",), 11, "FundamentalType")
 
-    #-----------------------------------------------------------------------#
-
-    tp = Type(("double", "const"), "FundamentalType")
-
-    print tp.get_build_value_idecl("d")
-    print ""
-
-    #-----------------------------------------------------------------------#
-
-    tp = Type(("double", "*",), "FundamentalType")
-
-    print tp.get_build_value_idecl("dp")
-    print tp.declate_var("dp2", "NULL")
-    print ""
-
-    #-----------------------------------------------------------------------#
-
-    tp = Type(("float", "*", "*", "*", "const",), "FundamentalType")
-
-    print tp.get_build_value_idecl("fp")
-    print tp.declate_var("fp2", "NULL")
-    print ""
-
-    #-----------------------------------------------------------------------#
-
-    tp = Type(("bool",), "FundamentalType")
-
-    print tp.get_build_value_idecl("flag")
-    print tp.declate_var("flag2", "false")
-    
-    #-----------------------------------------------------------------------#
-    
-    from Module import wxPythonNamer
-
-    tp = Type(("wxSize", "const",), "Class")
-    print tp.get_build_value_idecl("sz", namer=wxPythonNamer())
+        block.write_code(tp.get_build_value_idecl("x"))
+        block.write_code(tp.get_extractor_code("x", "py_x", "return nullptr;"))
 
 
-def _test_get_type_from_id():
-    import xml.etree.ElementTree as ET
-    root = ET.parse("wx.xml").getroot()
+    with _BlockStream() as block:
+        tp = Type(("double", "const"), 12, "FundamentalType")
 
-    print _is_function_pointer(_get_node_by_id("_13", root), root)
-    print _is_function_pointer(_get_node_by_id("_19", root), root)
-    print _is_function_pointer(_get_node_by_id("_14", root), root)
+        block.write_code(tp.get_build_value_idecl("d"))
+        block.write_code(tp.get_extractor_code("d", "py_d", "return nullptr;"))
+
+
+    with _BlockStream() as block:
+        tp = Type(("double", "*",), 13, "FundamentalType")
+
+        block.write_code(tp.get_build_value_idecl("dp"))
+        block.write_code(tp.get_extractor_code("dp", "py_dp", "return nullptr;"))
+
+        block.write_code(tp.declare_var("dp2", "nullptr"))
+
+
+    with _BlockStream() as block:
+        tp = Type(("float", "*", "*", "*", "const",), 14, "FundamentalType")
+
+        block.write_code(tp.get_build_value_idecl("fp"))
+        block.write_code(tp.get_extractor_code("fp", "py_fp", "return nullptr;"))
+
+        block.write_code(tp.declare_var("fp2", "nullptr"))
+
+
+    with _BlockStream() as block:
+        tp = Type(("bool",), 15, "FundamentalType")
+
+        block.write_code(tp.get_build_value_idecl("flag"))
+        block.write_code(tp.get_extractor_code("flag", "py_flag", "return nullptr;"))
+
+        block.write_code(tp.declare_var("flag2", "nullptr"))
+
+
+    with _BlockStream() as block:
+        tp = Type(("wchar_t", "const", "*"), 222, "PointerType")
+
+        block.write_code(tp.get_build_value_idecl("s"))
+        block.write_code(tp.get_extractor_code("s", "py_s", "return nullptr;"))
+
+
+    with _BlockStream() as block:
+        tp = Type(("wxSize", "const",), 16, "Class")
+
+        from Console.wxMSW.__wx__ import WxPythonNamer
+        namer = WxPythonNamer()
+        block.write_code(tp.get_build_value_idecl("sz", namer=namer))
+        block.write_code(tp.get_extractor_code("sz", "py_sz", "return nullptr;", namer=namer))
+
+
+    with _BlockStream() as block:
+        tp = Type(("wxSize", "const", "*",), 17, "Class")
+
+        block.write_code(tp.get_build_value_idecl("sz2", namer=namer))
+        block.write_code(tp.get_extractor_code("sz2", "py_sz2", "return nullptr;", namer=namer))
+
+
+    with _BlockStream() as block:
+        tp = Type(("wxSize", "const", "&",), 18, "Class")
+
+        block.write_code(tp.get_build_value_idecl("sz3", namer=namer))
+        block.write_code(tp.get_extractor_code("sz32", "py_sz3", "return nullptr;", namer=namer))
+
+
+    with _BlockStream() as block:
+        tp = Type(("std::vector<int>", "const", "&",), 19, "Class")
+
+        block.write_code(tp.get_build_value_idecl("v1", namer=namer))
+        block.write_code(tp.get_extractor_code("v1", "py_v1", "return nullptr;", namer))
+
+
+    with _BlockStream() as block:
+        tp = Type(("std::map<int,int>", "const", "&",), 20, "Class")
+
+        block.write_code(tp.get_build_value_idecl("m", namer=namer))
+        block.write_code(tp.get_extractor_code("m", "py_m", "return nullptr;", namer))
+
+
+def _test_get_type_by_id():
+    from xml.etree.ElementTree import parse
+
+    print("-----------------------------")
+    print("-- _test_get_type_by_id()  --")
+    print("-----------------------------")
+
+    root = parse(r"Tests/Y.xml").getroot()
+    if root is not None:
+        print(get_type_by_id("_217", root))  # const wchar_t *
+        print(get_type_by_id("_219c", root))  # const char wxToolBarNameStr[]
+        print(get_type_by_id("_219", root))  # char wxToolBarNameStr[]
+
+        tp =  get_type_by_id("_183c", root)  # char * const ConstPtr
+        if tp is not None:
+            print(tp)
+            print(tp.declare_var("const_ptr", "nullptr", strip_last_const=False))
+            print(tp.declare_var("const_ptr", "nullptr"))
+            print("")
+
+
+def _test_declaring_to_assigning():
+    print("-------------------------------------")
+    print("-- _test_declaring_to_assigning()  --")
+    print("-------------------------------------")
+
+    tp = Type(("int",), 11, "FundamentalType")
+
+    code = "int x = 123;"
+    print(declaring_to_assigning(tp, "x", code))
+
+    code = "int x(123);"
+    print(declaring_to_assigning(tp, "x", code))
+
+    code = "int x;\nx = 12345;"
+    print(declaring_to_assigning(tp, "x", code))
+
+    tp = Type(("PyObject", "*",), 11, "PointerType")
+    borrow_from_ptr = '''PyObject *py_item_raw;
+if (item) {
+    PyObject *Borrow__Point(const wxPoint &from);
+    py_item_raw = Borrow__Point(*item);
+}
+else {
+    Py_INCREF(Py_None);
+    py_item_raw = Py_None;
+}
+PyObject *py_item = py_item_raw;'''
+    print(declaring_to_assigning(tp, "py_item", borrow_from_ptr))
+
+    tp = Type(("const", "char", "*",), 0, "PointerType")
+    code = '''const char *key = nullptr;
+key = PyString_AsString("KEY");'''
+    print(declaring_to_assigning(tp, "key", code))
+
 
 if __name__ == "__main__":
-    _test_get_type_from_id()
+    _test_declaring_to_assigning()
+    _test_get_type_by_id()
+
+    header_jar = HeaderJar.HeaderJar()
+    Session.begin(header_jar)
+
+    Converters.add(Converters.WcsConv())
+
+    integer = Type(("int",), 99, "FundamentalType")
+    Converters.add(Converters.ListConv(integer))
+    Converters.add(Converters.DictConv(integer, integer))
+
+    _test()
+
+    Session.end()

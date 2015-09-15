@@ -6,55 +6,54 @@ The class PyTypeObject generates a PyTypeObject structure contents.
 class PyTypeObject(object):
     TEMPLATE = (
         'PyTypeObject %(typestruct)s = {\n'
-        '     PyVarObject_HEAD_INIT(NULL, 0)\n'
-        '    (char *) "%(tp_name)s",            /* tp_name */\n'
-        '     %(tp_basicsize)s,                  /* tp_basicsize */\n'
-        '     0,                                 /* tp_itemsize */\n'
-        '            /* ------------ methods ---------- */\n'
-        '    (destructor) %(tp_dealloc)s,        /* tp_dealloc */\n'
-        '    (printfunc) 0,                      /* tp_print */\n'
-        '    (getattrfunc) %(tp_getattr)s,       /* tp_getattr */\n'
-        '    (setattrfunc) %(tp_setattr)s,       /* tp_setattr */\n'
-        '    (cmpfunc) %(tp_compare)s,           /* tp_compare */\n'
-        '    (reprfunc) %(tp_repr)s,             /* tp_repr */\n'
-        '    (PyNumberMethods *) %(tp_as_number)s,     /* tp_as_number */\n'
+        '     PyVarObject_HEAD_INIT(nullptr, 0)\n'
+        '    "%(tp_name)s", /* tp_name */\n'
+        '    (Py_ssize_t) %(tp_basicsize)s, /* tp_basicsize */\n'
+        '    (Py_ssize_t) 0, /* tp_itemsize */\n'
+        '    (destructor) %(tp_dealloc)s, /* tp_dealloc */\n'
+        '    (printfunc) 0, /* tp_print */\n'
+        '    (getattrfunc) %(tp_getattr)s, /* tp_getattr */\n'
+        '    (setattrfunc) %(tp_setattr)s, /* tp_setattr */\n'
+        '    (cmpfunc) %(tp_compare)s, /* tp_compare */\n'
+        '    (reprfunc) %(tp_repr)s, /* tp_repr */\n'
+        '    (PyNumberMethods *) %(tp_as_number)s, /* tp_as_number */\n'
         '    (PySequenceMethods *) %(tp_as_sequence)s, /* tp_as_sequence */\n'
-        '    (PyMappingMethods *) %(tp_as_mapping)s,   /* tp_as_mapping */\n'
-        '    (hashfunc) %(tp_hash)s,             /* tp_hash */\n'
-        '    (ternaryfunc) %(tp_call)s,          /* tp_call */\n'
-        '    (reprfunc) %(tp_str)s,              /* tp_str */\n'
-        '    (getattrofunc) %(tp_getattro)s,     /* tp_getattro */\n'
-        '    (setattrofunc) %(tp_setattro)s,     /* tp_setattro */\n'
-        '    (PyBufferProcs *) %(tp_as_buffer)s,  /* tp_as_buffer */\n'
-        '     %(tp_flags)s,        /* tp_flags */\n'
-        '     %(tp_doc)s,                        /* Documentation string */\n'
-        '    (traverseproc) %(tp_traverse)s,     /* tp_traverse */\n'
-        '    (inquiry) %(tp_clear)s,             /* tp_clear */\n'
-        '    (richcmpfunc) %(tp_richcompare)s,   /* tp_richcompare */\n'
-        '     %(tp_weaklistoffset)s,             /* tp_weaklistoffset */\n'
-        '    (getiterfunc) %(tp_iter)s,          /* tp_iter */\n'
-        '    (iternextfunc) %(tp_iternext)s,     /* tp_iternext */\n'
+        '    (PyMappingMethods *) %(tp_as_mapping)s, /* tp_as_mapping */\n'
+        '    (hashfunc) %(tp_hash)s, /* tp_hash */\n'
+        '    (ternaryfunc) %(tp_call)s, /* tp_call */\n'
+        '    (reprfunc) %(tp_str)s, /* tp_str */\n'
+        '    (getattrofunc) %(tp_getattro)s, /* tp_getattro */\n'
+        '    (setattrofunc) %(tp_setattro)s, /* tp_setattro */\n'
+        '    (PyBufferProcs *) %(tp_as_buffer)s, /* tp_as_buffer */\n'
+        '     %(tp_flags)s, /* tp_flags */\n'
+        '     %(tp_doc)s, /* Documentation string */\n'
+        '    (traverseproc) %(tp_traverse)s, /* tp_traverse */\n'
+        '    (inquiry) %(tp_clear)s, /* tp_clear */\n'
+        '    (richcmpfunc) %(tp_richcompare)s, /* tp_richcompare */\n'
+        '     %(tp_weaklistoffset)s, /* tp_weaklistoffset */\n'
+        '    (getiterfunc) %(tp_iter)s, /* tp_iter */\n'
+        '    (iternextfunc) %(tp_iternext)s, /* tp_iternext */\n'
         '    (struct PyMethodDef *) %(tp_methods)s, /* tp_methods */\n'
-        '    (struct PyMemberDef *) NULL,        /* tp_members */\n'
-        '     %(tp_getset)s,                     /* tp_getset */\n'
-        '     NULL,                              /* tp_base */\n'
-        '     NULL,                              /* tp_dict */\n'
-        '    (descrgetfunc) %(tp_descr_get)s,    /* tp_descr_get */\n'
-        '    (descrsetfunc) %(tp_descr_set)s,    /* tp_descr_set */\n'
-        '     %(tp_dictoffset)s,                 /* tp_dictoffset */\n'
-        '    (initproc) %(tp_init)s,             /* tp_init */\n'
-        '    (allocfunc) %(tp_alloc)s,           /* tp_alloc */\n'
-        '    (newfunc) %(tp_new)s,               /* tp_new */\n'
-        '    (freefunc) %(tp_free)s,             /* tp_free */\n'
-        '    (inquiry) %(tp_is_gc)s,             /* tp_is_gc */\n'
-        '     NULL,                              /* tp_bases */\n'
-        '     NULL,                              /* tp_mro */\n'
-        '     NULL,                              /* tp_cache */\n'
-        '     NULL,                              /* tp_subclasses */\n'
-        '     NULL,                              /* tp_weaklist */\n'
-        '    (destructor) NULL                   /* tp_del */\n'
+        '    (struct PyMemberDef *) nullptr, /* tp_members */\n'
+        '     %(tp_getset)s, /* tp_getset */\n'
+        '     nullptr, /* tp_base */\n'
+        '     nullptr, /* tp_dict */\n'
+        '    (descrgetfunc) %(tp_descr_get)s, /* tp_descr_get */\n'
+        '    (descrsetfunc) %(tp_descr_set)s, /* tp_descr_set */\n'
+        '     %(tp_dictoffset)s, /* tp_dictoffset */\n'
+        '    (initproc) %(tp_init)s, /* tp_init */\n'
+        '    (allocfunc) %(tp_alloc)s, /* tp_alloc */\n'
+        '    (newfunc) %(tp_new)s, /* tp_new */\n'
+        '    (freefunc) %(tp_free)s, /* tp_free */\n'
+        '    (inquiry) %(tp_is_gc)s, /* tp_is_gc */\n'
+        '     nullptr, /* tp_bases */\n'
+        '     nullptr, /* tp_mro */\n'
+        '     nullptr, /* tp_cache */\n'
+        '     nullptr, /* tp_subclasses */\n'
+        '     nullptr, /* tp_weaklist */\n'
+        '    (destructor) nullptr /* tp_del */\n'
         '};\n'
-        )
+    )
 
     def __init__(self):
         self.slots = {}
@@ -68,40 +67,40 @@ class PyTypeObject(object):
 
         slots = dict(self.slots)
 
-        slots.setdefault('tp_dealloc', 'NULL')
-        slots.setdefault('tp_getattr', 'NULL')
-        slots.setdefault('tp_setattr', 'NULL')
-        slots.setdefault('tp_compare', 'NULL')
-        slots.setdefault('tp_repr', 'NULL')
-        slots.setdefault('tp_as_number', 'NULL')
-        slots.setdefault('tp_as_sequence', 'NULL')
-        slots.setdefault('tp_as_mapping', 'NULL')
-        slots.setdefault('tp_hash', 'NULL')
-        slots.setdefault('tp_call', 'NULL')
-        slots.setdefault('tp_str', 'NULL')
-        slots.setdefault('tp_getattro', 'NULL')
-        slots.setdefault('tp_setattro', 'NULL')
-        slots.setdefault('tp_as_buffer', 'NULL')
+        slots.setdefault('tp_dealloc', 'nullptr')
+        slots.setdefault('tp_getattr', 'nullptr')
+        slots.setdefault('tp_setattr', 'nullptr')
+        slots.setdefault('tp_compare', 'nullptr')
+        slots.setdefault('tp_repr', 'nullptr')
+        slots.setdefault('tp_as_number', 'nullptr')
+        slots.setdefault('tp_as_sequence', 'nullptr')
+        slots.setdefault('tp_as_mapping', 'nullptr')
+        slots.setdefault('tp_hash', 'nullptr')
+        slots.setdefault('tp_call', 'nullptr')
+        slots.setdefault('tp_str', 'nullptr')
+        slots.setdefault('tp_getattro', 'nullptr')
+        slots.setdefault('tp_setattro', 'nullptr')
+        slots.setdefault('tp_as_buffer', 'nullptr')
         slots.setdefault('tp_flags', 'Py_TPFLAGS_DEFAULT')
-        slots.setdefault('tp_doc', 'NULL')
-        slots.setdefault('tp_traverse', 'NULL')
-        slots.setdefault('tp_clear', 'NULL')
-        slots.setdefault('tp_richcompare', 'NULL')
+        slots.setdefault('tp_doc', 'nullptr')
+        slots.setdefault('tp_traverse', 'nullptr')
+        slots.setdefault('tp_clear', 'nullptr')
+        slots.setdefault('tp_richcompare', 'nullptr')
         slots.setdefault('tp_weaklistoffset', '0')
-        slots.setdefault('tp_iter', 'NULL')
-        slots.setdefault('tp_iternext', 'NULL')
-        slots.setdefault('tp_methods', 'NULL')
-        slots.setdefault('tp_getset', 'NULL')
-        slots.setdefault('tp_descr_get', 'NULL')
-        slots.setdefault('tp_descr_set', 'NULL')
+        slots.setdefault('tp_iter', 'nullptr')
+        slots.setdefault('tp_iternext', 'nullptr')
+        slots.setdefault('tp_methods', 'nullptr')
+        slots.setdefault('tp_getset', 'nullptr')
+        slots.setdefault('tp_descr_get', 'nullptr')
+        slots.setdefault('tp_descr_set', 'nullptr')
         slots.setdefault('tp_dictoffset', '0')
-        slots.setdefault('tp_init', 'NULL')
+        slots.setdefault('tp_init', 'nullptr')
         slots.setdefault('tp_alloc', 'PyType_GenericAlloc')
         slots.setdefault('tp_new', 'PyType_GenericNew')
         slots.setdefault('tp_free', '0')
-        slots.setdefault('tp_is_gc', 'NULL')
+        slots.setdefault('tp_is_gc', 'nullptr')
         
-        code_sink.writeln(self.TEMPLATE % slots)
+        code_sink.write_code(self.TEMPLATE % slots)
 
 
 class PyNumberMethods(object):
@@ -176,7 +175,7 @@ class PyNumberMethods(object):
         '(binaryfunc) %(nb_xor)s,\n'
         '(binaryfunc) %(nb_or)s,\n'
         '(unaryfunc) %(nb_int)s,\n'
-        'NULL,\n'
+        'nullptr,\n'
         '(unaryfunc) %(nb_float)s,\n'
         '\n'
         '(binaryfunc) %(nb_inplace_add)s,\n'
@@ -199,7 +198,7 @@ class PyNumberMethods(object):
         '#endif\n'
         
         '};\n'
-        )
+    )
 
     def __init__(self):
         self.slots = {}
@@ -211,48 +210,48 @@ class PyNumberMethods(object):
 
         slots = dict(self.slots)
 
-        slots.setdefault('nb_add', 'NULL')
-        slots.setdefault('nb_bool', 'NULL')
-        slots.setdefault('nb_subtract', 'NULL')
-        slots.setdefault('nb_multiply', 'NULL')
-        slots.setdefault('nb_divide', 'NULL')
-        slots.setdefault('nb_remainder', 'NULL')
-        slots.setdefault('nb_divmod', 'NULL')
-        slots.setdefault('nb_power', 'NULL')
-        slots.setdefault('nb_negative', 'NULL')
-        slots.setdefault('nb_positive', 'NULL')
-        slots.setdefault('nb_absolute', 'NULL')
-        slots.setdefault('nb_nonzero', 'NULL')
-        slots.setdefault('nb_invert', 'NULL')
-        slots.setdefault('nb_lshift', 'NULL')
-        slots.setdefault('nb_rshift', 'NULL')
-        slots.setdefault('nb_and', 'NULL')
-        slots.setdefault('nb_xor', 'NULL')
-        slots.setdefault('nb_or', 'NULL')
-        slots.setdefault('nb_coerce', 'NULL')
-        slots.setdefault('nb_int', 'NULL')
-        slots.setdefault('nb_long', 'NULL')
-        slots.setdefault('nb_float', 'NULL')
-        slots.setdefault('nb_oct', 'NULL')
-        slots.setdefault('nb_hex', 'NULL')
-        slots.setdefault('nb_inplace_add', 'NULL')
-        slots.setdefault('nb_inplace_subtract', 'NULL')
-        slots.setdefault('nb_inplace_multiply', 'NULL')
-        slots.setdefault('nb_inplace_divide', 'NULL')
-        slots.setdefault('nb_inplace_remainder', 'NULL')
-        slots.setdefault('nb_inplace_power', 'NULL')
-        slots.setdefault('nb_inplace_lshift', 'NULL')
-        slots.setdefault('nb_inplace_rshift', 'NULL')
-        slots.setdefault('nb_inplace_and', 'NULL')
-        slots.setdefault('nb_inplace_xor', 'NULL')
-        slots.setdefault('nb_inplace_or', 'NULL')
-        slots.setdefault('nb_floor_divide', 'NULL')
-        slots.setdefault('nb_true_divide', 'NULL')
-        slots.setdefault('nb_inplace_floor_divide', 'NULL')
-        slots.setdefault('nb_inplace_true_divide', 'NULL')
-        slots.setdefault('nb_index', 'NULL')
+        slots.setdefault('nb_add', 'nullptr')
+        slots.setdefault('nb_bool', 'nullptr')
+        slots.setdefault('nb_subtract', 'nullptr')
+        slots.setdefault('nb_multiply', 'nullptr')
+        slots.setdefault('nb_divide', 'nullptr')
+        slots.setdefault('nb_remainder', 'nullptr')
+        slots.setdefault('nb_divmod', 'nullptr')
+        slots.setdefault('nb_power', 'nullptr')
+        slots.setdefault('nb_negative', 'nullptr')
+        slots.setdefault('nb_positive', 'nullptr')
+        slots.setdefault('nb_absolute', 'nullptr')
+        slots.setdefault('nb_nonzero', 'nullptr')
+        slots.setdefault('nb_invert', 'nullptr')
+        slots.setdefault('nb_lshift', 'nullptr')
+        slots.setdefault('nb_rshift', 'nullptr')
+        slots.setdefault('nb_and', 'nullptr')
+        slots.setdefault('nb_xor', 'nullptr')
+        slots.setdefault('nb_or', 'nullptr')
+        slots.setdefault('nb_coerce', 'nullptr')
+        slots.setdefault('nb_int', 'nullptr')
+        slots.setdefault('nb_long', 'nullptr')
+        slots.setdefault('nb_float', 'nullptr')
+        slots.setdefault('nb_oct', 'nullptr')
+        slots.setdefault('nb_hex', 'nullptr')
+        slots.setdefault('nb_inplace_add', 'nullptr')
+        slots.setdefault('nb_inplace_subtract', 'nullptr')
+        slots.setdefault('nb_inplace_multiply', 'nullptr')
+        slots.setdefault('nb_inplace_divide', 'nullptr')
+        slots.setdefault('nb_inplace_remainder', 'nullptr')
+        slots.setdefault('nb_inplace_power', 'nullptr')
+        slots.setdefault('nb_inplace_lshift', 'nullptr')
+        slots.setdefault('nb_inplace_rshift', 'nullptr')
+        slots.setdefault('nb_inplace_and', 'nullptr')
+        slots.setdefault('nb_inplace_xor', 'nullptr')
+        slots.setdefault('nb_inplace_or', 'nullptr')
+        slots.setdefault('nb_floor_divide', 'nullptr')
+        slots.setdefault('nb_true_divide', 'nullptr')
+        slots.setdefault('nb_inplace_floor_divide', 'nullptr')
+        slots.setdefault('nb_inplace_true_divide', 'nullptr')
+        slots.setdefault('nb_index', 'nullptr')
 
-        code_sink.writeln(self.TEMPLATE % slots)
+        code_sink.write_code(self.TEMPLATE % slots)
 
 class PySequenceMethods(object):
     TEMPLATE = '''
@@ -264,13 +263,13 @@ static PySequenceMethods %(variable)s = {
 #if PY_MAJOR_VERSION < 3
     (ssizessizeargfunc) %(sq_slice)s,
 #else
-    NULL,
+    nullptr,
 #endif
     (ssizeobjargproc) %(sq_ass_item)s,
 #if PY_MAJOR_VERSION < 3
     (ssizessizeobjargproc) %(sq_ass_slice)s,
 #else
-    NULL,
+    nullptr,
 #endif
     (objobjproc) %(sq_contains)s,
     /* Added in release 2.0 */
@@ -290,7 +289,7 @@ static Py_ssize_t
     Py_ssize_t result;
 
     py_result = %(method_name)s(py_self);
-    if (py_result == NULL) {
+    if (py_result == nullptr) {
         PyErr_SetString(PyExc_RuntimeError, "Unknown error in attempting to determine __len__.");
         Py_XDECREF(py_result);
         return -1;
@@ -314,9 +313,9 @@ static Py_ssize_t
     Py_ssize_t result;
 
     args = PyTuple_New (0);
-    py_result = %(method_name)s(py_self, args, NULL);
+    py_result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
-    if (py_result == NULL) {
+    if (py_result == nullptr) {
         PyErr_SetString(PyExc_RuntimeError, "Unknown error in attempting to determine __len__.");
         Py_XDECREF(py_result);
         return -1;
@@ -337,7 +336,7 @@ static PyObject*
     PyObject *args;
 
     args = Py_BuildValue("(O)", py_rhs);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
     return result;
 }
@@ -353,7 +352,7 @@ static PyObject*
     PyObject *args;
 
     args = Py_BuildValue("(i)", py_i);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
     return result;
 }
@@ -369,12 +368,12 @@ static PyObject*
     PyObject *args;
 
     args = Py_BuildValue("(i)", py_i);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
     if (PyErr_ExceptionMatches(PyExc_IndexError) ||
         PyErr_ExceptionMatches(PyExc_StopIteration)) {
         Py_XDECREF(result);
-        return NULL;
+        return nullptr;
     } else {
         return result;
     }
@@ -393,12 +392,12 @@ static PyObject*
     PyObject *args;
 
     args = Py_BuildValue("(ii)", py_i1, py_i2);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
     if (PyErr_ExceptionMatches(PyExc_IndexError) ||
         PyErr_ExceptionMatches(PyExc_StopIteration)) {
         Py_XDECREF(result);
-        return NULL;
+        return nullptr;
     } else {
         return result;
     }
@@ -415,9 +414,9 @@ static int
     PyObject *args;
 
     args = Py_BuildValue("(iO)", py_i, py_val);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
-    if (result == NULL) {
+    if (result == nullptr) {
         PyErr_SetString(PyExc_IndexError, "Unknown error trying to set value in container.");
         return -1;
 #if PY_MAJOR_VERSION >= 3
@@ -450,9 +449,9 @@ static int
     PyObject *args;
 
     args = Py_BuildValue("(iiO)", py_i1, py_i2, py_vals);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
-    if (result == NULL) {
+    if (result == nullptr) {
         PyErr_SetString(PyExc_RuntimeError, "Unknown error trying to set slice in container.");
         return -1;
     } else if (PyInt_Check(result) == 0) {
@@ -476,12 +475,12 @@ static int
     PyObject *args;
 
     args = Py_BuildValue("(O)", py_val);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
 #if PY_MAJOR_VERSION >= 3
-    if (result == NULL || PyLong_Check(result) == 0) {
+    if (result == nullptr || PyLong_Check(result) == 0) {
 #else
-    if (result == NULL || PyInt_Check(result) == 0) {
+    if (result == nullptr || PyInt_Check(result) == 0) {
 #endif
         PyErr_SetString(PyExc_RuntimeError, "Unknown error in attempting to test __contains__.");
         Py_XDECREF(result);
@@ -508,7 +507,7 @@ static PyObject*
     PyObject *args;
 
     args = Py_BuildValue("(O)", py_rhs);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
     return result;
 }
@@ -524,14 +523,14 @@ static PyObject*
     PyObject *args;
 
     args = Py_BuildValue("(i)", py_i);
-    result = %(method_name)s(py_self, args, NULL);
+    result = %(method_name)s(py_self, args, nullptr);
     Py_DECREF(args);
     return result;
 }
 
 ''',
 
-        }
+    }
 
     def __init__(self):
         self.slots = {}
@@ -543,16 +542,15 @@ static PyObject*
 
         slots = dict(self.slots)
 
-        slots.setdefault('sq_length', 'NULL')
-        slots.setdefault('sq_concat', 'NULL')
-        slots.setdefault('sq_repeat', 'NULL')
-        slots.setdefault('sq_item', 'NULL')
-        slots.setdefault('sq_slice', 'NULL')
-        slots.setdefault('sq_ass_item', 'NULL')
-        slots.setdefault('sq_ass_slice', 'NULL')
-        slots.setdefault('sq_contains', 'NULL')
-        slots.setdefault('sq_inplace_concat', 'NULL')
-        slots.setdefault('sq_inplace_repeat', 'NULL')
+        slots.setdefault('sq_length', 'nullptr')
+        slots.setdefault('sq_concat', 'nullptr')
+        slots.setdefault('sq_repeat', 'nullptr')
+        slots.setdefault('sq_item', 'nullptr')
+        slots.setdefault('sq_slice', 'nullptr')
+        slots.setdefault('sq_ass_item', 'nullptr')
+        slots.setdefault('sq_ass_slice', 'nullptr')
+        slots.setdefault('sq_contains', 'nullptr')
+        slots.setdefault('sq_inplace_concat', 'nullptr')
+        slots.setdefault('sq_inplace_repeat', 'nullptr')
 
-        code_sink.writeln(self.TEMPLATE % slots)
-
+        code_sink.write_code(self.TEMPLATE % slots)

@@ -1,4 +1,44 @@
-__author__ = 'wxn'
+
+import os
+
+
+def smart_write(path, content):
+    if not os.path.exists(path) or open(path).read() != content:
+        with open(path, "w") as outf:
+            outf.write(content)
+
+        print("Written `%s`." % os.path.realpath(path))
+
+
+def split_namespaces(namespaces):
+    splitted = []
+    depth = 0
+    ns = []
+
+    while len(namespaces) > 0:
+        if namespaces[-1] == '>':
+            depth += 1
+        elif namespaces[-1] == '<':
+            depth -= 1
+        elif namespaces.endswith("::"):
+            if depth == 0:
+                namespaces = namespaces[:-2]
+
+                ns.reverse()
+                splitted.append("".join(ns))
+                ns = []
+
+                continue
+
+        ns.append(namespaces[-1])
+        namespaces = namespaces[:-1]
+
+    if len(ns) > 0:
+        ns.reverse()
+        splitted.append("".join(ns))
+
+    splitted.reverse()
+    return splitted
 
 
 def context_of(node, root):
@@ -7,7 +47,12 @@ def context_of(node, root):
 
     while node_id:
         node = root.find(".//*[@id='%s']" % node_id)
-        ns = node.attrib["name"]
+        try:
+            ns = node.attrib["name"]
+        except AttributeError, e:
+            print("!! Lacks `%s` !!" % node_id)
+            raise e
+
         if ns != "::":
             namespaces.insert(0, ns)
             node_id = node.attrib.get("context", None)
@@ -36,6 +81,9 @@ def _test_full_name(root):
 
 
 if __name__ == "__main__":
+    print split_namespaces("std::vector<int, std::allocator<int> >")
+    print split_namespaces("std::vector<std::allocator<std::size_t>, std::allocator<int> >::const_iterator")
+
     import xml.etree.ElementTree as ET
     r = ET.parse("wx.xml").getroot()
 
