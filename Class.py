@@ -20,6 +20,15 @@ LT_BORROWED = 2
 
 
 class Class:
+    class DummyDef:
+        def __init__(self, **kwargs):
+            self.name = kwargs["name"]
+            self.full_name = kwargs["full_name"]
+            self.is_struct = kwargs.get("is_struct", False)
+            self.namespace = kwargs.get("namespace", "")
+            self.nester = kwargs.get("nester", "")
+            self.header = kwargs.get("header", None)
+
     def __init__(self, root, node, module, dummy_def=None):
         assert node is not None or dummy_def is not None
 
@@ -79,12 +88,20 @@ class Class:
         # For temporary use only, avoid passing it everywhere
         self.block = CodeBlock.CodeBlock()
 
-        if dummy_def:
-            self.name = dummy_def["NAME"]
-            self.full_name = dummy_def["FULL_NAME"]
+        if dummy_def is not None:
+            self.name = dummy_def.name
+            self.full_name = dummy_def.full_name
 
-            self.nester = dummy_def["NESTER"]
+            self.nester = dummy_def.nester
             self.direct_bases = []
+
+            # TODO: namespace alias
+            if not dummy_def.namespace and not dummy_def.nester:
+                assert self.name == self.full_name
+                self.header_jar.add_global("%s %s;" % (
+                    "struct" if dummy_def.is_struct else "class",
+                     self.name
+                ))
 
             # Instantiating, destroying, copying or inheriting
             # a dummy class (object) is not allowed
@@ -243,9 +260,7 @@ class Class:
         memblock = CodeBlock.CodeBlock()
 
         memblock.write_code(self.header_provider.pch())
-        for incl_hd in sorted(self.header_jar.headers):
-            memblock.write_code(incl_hd)
-
+        memblock.write_code(self.header_jar.concat_sorted())
         memblock.append_blank_line()
 
         # TODO: a dirty trick
@@ -260,7 +275,7 @@ class Class:
                               self.namer):
             for se in self.enums.scoped_enums.values():
                 cls = Class.instantiate_scoped_enum(se, module, self)
-                module.register_classs(cls)
+                module.register_class(cls)
 
     def _fields(self):
         for fnode in self.root.findall("Field[@context='%s']" % self.node.attrib["id"]):
@@ -791,7 +806,7 @@ class Class:
                 elif not vm.final:
                     virtual_members.append(vm)
 
-            signitures = { vm.sig() for vm in self.virtual_members }
+            signitures = {vm.sig() for vm in self.virtual_members}
 
             for bname in self.direct_bases:
                 for vm in Registry.get_class(bname).collect_virtual_members():

@@ -50,23 +50,35 @@ class MethodJar:
     def empty(self):
         return len(self.methods) == 0
 
+    @staticmethod
+    def _filter(root, mnode, allows_subclassing, blacklist):
+        # always collect pure virtual functions
+        if mnode.attrib.get("pure_virtual") == "1":
+            return False
+
+        if blacklist.method(mnode.attrib["demangled"]):
+            Session.ignored_methods.add(mnode.attrib["demangled"])
+            return True
+
+        if MethodJar._filter_by_return_type(mnode, blacklist, root, Session.ignored_methods):
+            return True
+
+        maccess = Access.access_type(mnode)
+        if not allows_subclassing and maccess != Access.PUBLIC:
+            return True
+
+        # private non-pure-virtuals will be handled later
+        if maccess != Access.PRIVATE or mnode.attrib.get("virtual", None) == "1":
+            return False
+
+        # filter all the other
+        return True
+
     def process_class(self, root, context_id, allows_subclassing, blacklist):
         assert isinstance(context_id, str)
 
         for mnode in root.findall("Method[@context='%s']" % context_id):
-            if blacklist.method(mnode.attrib["demangled"]):
-                Session.ignored_methods.add(mnode.attrib["demangled"])
-                continue
-
-            if self._filter_by_return_type(mnode, blacklist, root, Session.ignored_methods):
-                continue
-
-            maccess = Access.access_type(mnode)
-            if not allows_subclassing and maccess != Access.PUBLIC:
-                continue
-
-            # private non-pure-virtuals will be handled later
-            if maccess != Access.PRIVATE or mnode.get("virtual", None) == "1":
+            if not MethodJar._filter(root, mnode, allows_subclassing, blacklist):
                 self._method(mnode, root, False)
 
         self._strip_non_virtual_const_overloads()
@@ -156,7 +168,8 @@ class MethodJar:
 
             self.methods[mname] = list(set(overloads) - to_strip)
 
-    def _normalize_method_name(self, mname, namer):
+    @staticmethod
+    def _normalize_method_name(mname, namer):
         return namer.normalize_template(mname) if '<' in mname else mname
 
     def generate_methods(self, block, namer, cls):

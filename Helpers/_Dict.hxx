@@ -15,10 +15,10 @@ namespace Python {
              KeyExtractor key_extractor, KeyBuilder key_builder,
              ValExtractor val_extractor, ValBuilder val_builder)
                 : Container(obj, type),
-                    m_key_extrator(key_extractor), 
-                    m_key_builder(key_builder),
-                    m_val_extrator(val_extractor),
-                    m_val_builder(val_builder) {
+                  m_key_extrator(key_extractor), 
+                  m_key_builder(key_builder),
+                  m_val_extrator(val_extractor),
+                  m_val_builder(val_builder) {
 
         }
 

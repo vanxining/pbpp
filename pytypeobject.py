@@ -59,12 +59,6 @@ class PyTypeObject(object):
         self.slots = {}
 
     def generate(self, code_sink):
-        """
-        Generates the type structure.  All slots are optional
-        except 'tp_name', 'tp_basicsize', and the
-        pseudo-slot 'typestruct'.
-        """
-
         slots = dict(self.slots)
 
         slots.setdefault('tp_dealloc', 'nullptr')
@@ -97,9 +91,9 @@ class PyTypeObject(object):
         slots.setdefault('tp_init', 'nullptr')
         slots.setdefault('tp_alloc', 'PyType_GenericAlloc')
         slots.setdefault('tp_new', 'PyType_GenericNew')
-        slots.setdefault('tp_free', '0')
+        slots.setdefault('tp_free', 'PyObject_Del')
         slots.setdefault('tp_is_gc', 'nullptr')
-        
+
         code_sink.write_code(self.TEMPLATE % slots)
 
 

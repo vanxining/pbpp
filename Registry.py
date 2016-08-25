@@ -47,21 +47,21 @@ class _Class:
 
 
 def _sort_classes():
-    classes = {cls_name: _Class(_registry[cls_name]) for cls_name in _registry}
+    klasses = {cls_name: _Class(_registry[cls_name]) for cls_name in _registry}
     global _sorted
     _sorted = []
 
-    while len(classes) > 0:
-        _do_sort_classes(classes)
+    while len(klasses) > 0:
+        _do_sort_classes(klasses)
 
 
-def _do_sort_classes(classes):
-    for cls_name in sorted(classes.keys()):
-        if len(classes[cls_name].depends) == 0:
-            cls = classes.pop(cls_name)
+def _do_sort_classes(klasses):
+    for cls_name in sorted(klasses.keys()):
+        if len(klasses[cls_name].depends) == 0:
+            cls = klasses.pop(cls_name)
             _sorted.append(cls.ref)
 
-            for c in classes.values():
+            for c in klasses.values():
                 if cls_name in c.depends:
                     c.depends.remove(cls_name)
 
@@ -71,7 +71,7 @@ def _do_sort_classes(classes):
     print([cls.full_name for cls in _sorted])
     print("")
 
-    for cls in classes.values():
+    for cls in klasses.values():
         print(cls.ref.full_name, cls.depends)
 
     raise RuntimeError("Unexposed classes as base classes exist.")

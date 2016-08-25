@@ -255,11 +255,11 @@ class Module:
             for se in self.enums.scoped_enums.values():
                 if not se.instantiated:
                     cls = Class.Class.instantiate_scoped_enum(se, self, None)
-                    self.register_classs(cls)
+                    self.register_class(cls)
 
                     se.instantiated = True
 
-    def register_classs(self, cls):
+    def register_class(self, cls):
         self.classes[cls.full_name] = cls
         Registry.add_class(cls)
 
@@ -295,7 +295,7 @@ class Module:
                 print("---------------------------------------------")
 
                 cls = Class.Class(self.root, cls_node, self)
-                self.register_classs(cls)
+                self.register_class(cls)
 
                 print("---------------------------------------------")
                 print("")
@@ -433,18 +433,18 @@ class Module:
         down = False
 
         for ddef in self.blacklist.dummy_classes.values():
-            if Registry.get_class(ddef["FULL_NAME"]):
+            if Registry.get_class(ddef.full_name):
                 continue
 
-            if ddef["NAMESPACE"] != myns:
+            if ddef.namespace != myns:
                 down = True
                 continue
 
             cls = Class.Class(self.root, None, self, ddef)
-            if ddef["HEADER"]:
-                cls.set_header(ddef["HEADER"])
+            if ddef.header:
+                cls.set_header(ddef.header)
 
-            self.register_classs(cls)
+            self.register_class(cls)
             self.modified = True
 
         if down:
@@ -509,7 +509,7 @@ class Module:
             "MNAME": self.name,
             "MNAME_FULL": self._pyside_full_name(),
             "FUNC_NAME": self.get_creator_name(),
-            "HEADERS": '\n'.join(sorted(self.header_jar.headers)),
+            "HEADERS": self.header_jar.concat_sorted(),
             "FPTRS": fp_mem_block.flush(),
             "FREE_FUNCTIONS": ff_mem_block.flush(),
         }

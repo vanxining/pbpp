@@ -57,7 +57,7 @@ class Enum:
         block.indent()
 
         for name in sorted(self.values.keys()):
-            block.write_code('{ "%s", %s },' % (name, self.values[name]))
+            block.write_code('{ "%s", static_cast<int>(%s) },' % (name, self.values[name]))
 
         block.write_code("{  nullptr }")
         block.unindent()
