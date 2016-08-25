@@ -17,4 +17,4 @@ Under development, this code has not been ready for public use now.
 
 ## 示例
 
-一个不完整的例子：[pywx](https://github.com/vanxining/pywx)
+一个较为完善的例子：[pywx](https://github.com/vanxining/pywx)
