@@ -3,4 +3,7 @@ Xml
 
 *.pyc
 *.ini
+
+Test.bat
+*.lnk
 Thumbs.db
