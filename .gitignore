@@ -1,0 +1,6 @@
+.idea
+Xml
+
+*.pyc
+*.ini
+Thumbs.db
