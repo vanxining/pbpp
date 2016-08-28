@@ -1,19 +1,29 @@
 ﻿PyBridge++
 =====
 
-A simple tool for generating Python wrapper for C++ code automatically.
+A simple tool for generating Python wrapper for C++ code non-intrusively and automatically.
 
 Under development, this code has not been ready for public use now.
 
-## 中文
+## 简介
 
-这个软件其实是在 [PyBindGen](https://launchpad.net/pybindgen) 的启发下开发出来的。为什么有了这样一个优雅的解决方案，我还要重复造轮子呢？
+让 Python 代码可以调用现成的 C/C++ 第三方库。
 
-首要原因是 [PyBindGen](https://launchpad.net/pybindgen) 只能将生成的所有 C++ 代码都集中在一个 .cpp 文件里——这对于绑定一个大的 C++ 库是不合适的。虽然 [PyBindGen](https://launchpad.net/pybindgen) 完全没有使用模板，但当前各家 C++ 编译器对于一个动辄 10k+ 行的 .cpp 文件想来还是有点力不从心的。
+这个简单的工具启发自 [PyBindGen](https://launchpad.net/pybindgen)。
 
-另一个原因是 [PyBindGen](https://launchpad.net/pybindgen) 不支持全局变量，而且作者短期内也没有为它添加这个特性的计划。[PyBindGen](https://launchpad.net/pybindgen) 本身的实现颇为复杂，普通用户要想对其做一些修改是很困难的，因此我就萌生了写一个功能较少的“山寨版”的想法，也就有了这个项目。
+重复造轮子的首要原因是 [PyBindGen](https://launchpad.net/pybindgen) 只能将生成的所有 C++ 代码都集中在一个 .cpp 文件里——这对于绑定一个大的 C++ 库是不合适的。虽然这个 .cpp 文件完全没有使用模板（与 [Boost::Python](http://www.boost.org/libs/python/doc/) 恰恰相反），但一个动辄数十万行的源文件对于常用的 C++ 编译器也并不是可以轻松对付的。
 
-需要配合 [CastXML](https://github.com/CastXML/CastXML) 使用。[CastXML](https://github.com/CastXML/CastXML) 在此起的作用是解析 C++ 头文件，生成其接口的 XML 描述。然后 PyBridge++ 便可以根据这些 XML 接口声明自动生成相应的 Python 端绑定代码。
+另一个原因是 [PyBindGen](https://launchpad.net/pybindgen) 不支持全局变量。[PyBindGen](https://launchpad.net/pybindgen) 本身的实现颇为复杂，要想为其加上这个功能是比较困难的。
+
+PyBridge++ 需要配合 [CastXML](https://github.com/CastXML/CastXML) 来使用。[CastXML](https://github.com/CastXML/CastXML) 的作用是解析 C/C++ 头文件（通过调用 Clang），生成其接口的 XML 描述。然后 PyBridge++ 便可以根据这些 XML 接口描述自动生成相应的 Python 绑定代码。
+
+## 用法
+
+用户应直接与位于 Console 子目录下的可视化辅助程序进行交互：PyBridge++ Binding Console。
+
+PyBridge++ Binding Console 基于 [wxWidgets](http://www.wxwidgets.org/) 来实现。此处 [wxWidgets](http://www.wxwidgets.org/) 的 Python 绑定也是由 PyBridge++ 来生成的，即为下文“示例”小节中的 [pywx](https://github.com/vanxining/pywx)。也就是说，PyBridge++ Binding Console 在某种程度上实现了自举。
+
+具体用法请参考 Docs 子目录下的详细文档。
 
 ## 示例
 
