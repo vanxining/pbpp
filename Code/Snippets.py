@@ -207,8 +207,7 @@ external_type_real_ptr = (
 
 extract_pointer = '''if (PyObject_TypeCheck(py_%(VAR_NAME)s, &%(PYTYPE)s)) {
     %(VAR_NAME)s = %(EXTRACTING_CODE)s;
-}
-else {
+} else {
     PyErr_Format(PyExc_TypeError, "[%%s:%%d<%%s>] Pointer of type `%(POINTER_TYPE)s` is required.", __FILE__, __LINE__, __FUNCTION__);
 >>>
 %(ERROR_HANDLER)s

@@ -26,6 +26,9 @@ int GetMethodArgsCount(PyObject *py_method) {
 
 PyObject *PackAsTuple(const std::initializer_list<int> &numbers) {
     PyObject *ret = PyTuple_New(numbers.size());
+    if (!ret) {
+        return ret;
+    }
 
     int i = 0;
     for (auto n : numbers) {
@@ -58,7 +61,7 @@ void CachePythonException(PyObject **exception) {
 
 void RestorePythonExceptions(PyObject **exceptions, int n) {
     PyObject *error_list = PyList_New(n);
-    for (int i = 0; i < n; ++i) {
+    for (int i = 0; i < n; i++) {
         PyList_SET_ITEM(error_list, i, PyObject_Str(exceptions[i]));
     }
 
@@ -130,7 +133,7 @@ int ToInt(PyObject *obj) {
 
 unsigned int ToUnsignedInt(PyObject *obj) {
     unsigned long result = PyLong_AsUnsignedLong(obj);
-    if (result == -1 && PyErr_Occurred()) {
+    if (result == static_cast<unsigned int>(-1) && PyErr_Occurred()) {
         PyErr_Clear();
 
         return static_cast<unsigned int>(ToDouble(obj));
