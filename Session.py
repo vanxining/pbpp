@@ -12,7 +12,6 @@ def end():
 def header_jar():
     return _header_jars[-1]
 
-#-------------------------------------------------------------------#
 
 ignored_namespaces = set()
 ignored_fields = set()
@@ -31,19 +30,20 @@ def clear_ignored_symbols_registry():
     global ignored_classes, ignored_bases, dummy_classes
     global ignored_methods, ignored_free_functions
     global ignored_fields
-    
+
     ignored_namespaces = set()
     ignored_fields = set()
     ignored_classes = set()
     ignored_bases = set()
     ignored_methods = set()
     ignored_free_functions = set()
-    
+
     dummy_classes = set()
-    
-    
+
+
 def print_ignored_symbols_registry():
-    print("\n---------------------------------------------")
+    print("")
+    print("---------------------------------------------")
 
     _print(ignored_namespaces, "ignored_namespaces")
     _print(ignored_fields, "ignored_fields")
@@ -58,7 +58,8 @@ def _print(container, var_name):
     if len(container) == 0:
         return
 
-    print("\n[%s]" % var_name)
+    print("")
+    print("[%s]" % var_name)
 
     for item in container:
         print("  " + item)
