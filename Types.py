@@ -219,7 +219,7 @@ class Type:
                 else:
                     return Code.Snippets.PyCapsule_New % template_args
             else:
-                assert namer
+                assert namer is not None
 
                 boilerplate = Code.Snippets.borrow_from_ptr
                 if self.is_ref():
@@ -244,7 +244,7 @@ class Type:
 
                 return ret
         else:
-            assert namer
+            assert namer is not None
 
             boilerplate = Code.Snippets.copy_raii if raii else Code.Snippets.copy
             return boilerplate % {
@@ -454,49 +454,49 @@ def declaring_to_assigning(tp, var_name, code):
 _built_in = {
     "char": {
         "specifier": 'c',
-        "builder": "PyInt_FromLong",
+        "builder": "PyInt_FromSize_t",
         "extractor": "pbpp::Types::ToChar",
         "checker": "pbpp::Types::IsNumber",
     },
 
     "unsigned char": {
         "specifier": 'B',
-        "builder": "PyInt_FromLong",
+        "builder": "PyInt_FromSize_t",
         "extractor": "pbpp::Types::ToUnsignedChar",
         "checker": "pbpp::Types::IsNumber",
     },
 
     "wchar_t": {
         "specifier": 'I',
-        "builder": "PyLong_FromUnsignedLong",
+        "builder": "PyInt_FromSize_t",
         "extractor": "pbpp::Types::ToWChar",
         "checker": "pbpp::Types::IsNumber",
     },
 
     "short int": {
         "specifier": 'h',
-        "builder": "PyInt_FromLong",
+        "builder": "PyInt_FromSsize_t",
         "extractor": "pbpp::Types::ToShort",
         "checker": "pbpp::Types::IsNumber",
     },
 
     "short unsigned int": {
         "specifier": 'H',
-        "builder": "PyInt_FromLong",
+        "builder": "PyInt_FromSize_t",
         "extractor": "pbpp::Types::ToUnsignedShort",
         "checker": "pbpp::Types::IsNumber",
     },
 
     "int": {
         "specifier": 'i',
-        "builder": "PyInt_FromLong",
+        "builder": "PyInt_FromSsize_t",
         "extractor": "pbpp::Types::ToInt",
         "checker": "pbpp::Types::IsNumber",
     },
 
     "unsigned int": {
         "specifier": 'I',
-        "builder": "PyLong_FromUnsignedLong",
+        "builder": "PyInt_FromSize_t",
         "extractor": "pbpp::Types::ToUnsignedInt",
         "checker": "pbpp::Types::IsNumber",
     },
