@@ -24,6 +24,7 @@ class Class:
         def __init__(self, **kwargs):
             self.name = kwargs["name"]
             self.full_name = kwargs["full_name"]
+            self.enum_class = kwargs.get("enum_class", False)
             self.is_struct = kwargs.get("is_struct", False)
             self.namespace = kwargs.get("namespace", "")
             self.nester = kwargs.get("nester", "")
@@ -69,7 +70,6 @@ class Class:
         self.base_vm_collected = False
 
         self.enums = Enum.Enum()
-        self.enum_class = False
 
         self.ctors = []
         self.methods = MethodJar.MethodJar()
@@ -92,12 +92,17 @@ class Class:
             self.name = dummy_def.name
             self.full_name = dummy_def.full_name
 
+            self.enum_class = dummy_def.enum_class
+
             self.nester = dummy_def.nester
             self.direct_bases = []
 
             # TODO: namespace alias
-            if not dummy_def.namespace and not dummy_def.nester:
+            if (not dummy_def.namespace and
+                    not dummy_def.nester and
+                    not dummy_def.enum_class):
                 assert self.name == self.full_name
+
                 self.header_jar.add_global("%s %s;" % (
                     "struct" if dummy_def.is_struct else "class",
                      self.name
@@ -120,6 +125,8 @@ class Class:
             self.name = node.attrib["name"]
             self.full_name = node.attrib["demangled"]
 
+            self.enum_class = False
+
             self.nester = self._get_nester_class()
             self.direct_bases = self._collect_direct_bases()
 
@@ -139,14 +146,14 @@ class Class:
         assert isinstance(se, Enum.ScopedEnum)
         assert nester is None or isinstance(nester, Class)
 
-        dummy_def = {
-            "NAME": se.name,
-            "FULL_NAME": se.full_name,
-            "NESTER": nester.full_name if nester else None,
-        }
+        dummy_def = Class.DummyDef(
+            name=se.name,
+            full_name=se.full_name,
+            enum_class=True,
+            nester=nester.full_name if nester else None
+        )
 
         enum_class = Class(None, None, module, dummy_def)
-        enum_class.enum_class = True
         enum_class.enums.values = se.values
 
         return enum_class
@@ -732,7 +739,8 @@ class Class:
     def allows_subclassing(self):
         return not (self.final or
                     self.no_accessible_canonical_ctors or
-                    self.dtor_access_type == Access.PRIVATE)
+                    self.dtor_access_type == Access.PRIVATE or
+                    self.enum_class)
 
     def _require_wrapper_class(self):
         if self.allows_subclassing():  # The first rule
