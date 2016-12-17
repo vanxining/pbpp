@@ -3,6 +3,7 @@
 
 import os
 import sys
+import traceback
 
 
 cd = os.path.dirname(os.path.realpath(__file__))
@@ -24,9 +25,9 @@ class App(wx.PyApp):
         try:
             win = MainWindow.MainWindow(parent=None)
             win.Show()
-        except Exception as e:
-            print("App::OnInit() -- Exception occurred!")
-            print(e)
+        except Exception:
+            traceback.print_exc()
+            return False
 
         return True
 

@@ -2,6 +2,7 @@
 
 import os
 import sys
+import traceback
 import xml.etree.ElementTree as ET
 import ConfigParser
 import importlib
@@ -36,9 +37,9 @@ class Worker:
     def Run(self):
         self.runnable()
 
-        evt = WorkerFinishEvent()
-        evt.done_listener = self.done_listener
-        wx.PostEvent(self.main_window, evt)
+        event = WorkerFinishEvent()
+        event.done_listener = self.done_listener
+        wx.PostEvent(self.main_window, event)
 
 
 class MyRedirector:
@@ -49,16 +50,14 @@ class MyRedirector:
         if not isinstance(msg, unicode):
             msg = msg.decode()
 
-        evt = ProgressEvent(message=msg)
-        wx.PostEvent(self.target, evt)
+        event = ProgressEvent(message=msg)
+        wx.PostEvent(self.target, event)
 
     def flush(self):
         pass
 
 
 def PrintAndClearIgnoredSymbolsRegistry():
-    return
-    Session.ignored_fields.clear()  # Too annoying
     Session.print_ignored_symbols_registry()
     Session.clear_ignored_symbols_registry()
 
@@ -77,6 +76,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
         self.config = ConfigParser.RawConfigParser()
         self.config.read("Settings.ini")
         self.proj_dir = self.config.get("Default", "proj")
+        self.print_ignored = self.config.getboolean("Default", "print_ignored")
 
         sys.path.append(os.path.abspath(self.proj_dir))
         self.mod_proj = importlib.import_module("Project")
@@ -268,6 +268,12 @@ class MainWindow(MainWindowBase.MainWindowBase):
                 self.Serialize()
 
     def InvokeGCC_XML(self, header_path):
+        if not os.path.exists(self.mod_proj.gccxml_bin):
+            self.logger.AppendText(u"Path to CastXML not valid:\n    %s\n" %
+                                   self.mod_proj.gccxml_bin)
+
+            return False
+
         xml_path = self.xml_path(header_path)
         cmd = u'"%s" %s -o "%s" "%s"' % (
             self.mod_proj.gccxml_bin,
@@ -285,6 +291,8 @@ class MainWindow(MainWindowBase.MainWindowBase):
 
         wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
 
+        return True
+
     def OnGCC_XML_All(self, event):
         if not self.Ask():
             return
@@ -294,14 +302,16 @@ class MainWindow(MainWindowBase.MainWindowBase):
         for header in self.Enabled():
             self.batch_gccxml_tasks.append(header)
 
-        self.DoBatchGCC_XML_Tasks()
-
-        self.logger.Clear()
-        self.EnableConsole(False)
+        if self.DoBatchGCC_XML_Tasks():
+            self.logger.Clear()
+            self.EnableConsole(False)
 
     def DoBatchGCC_XML_Tasks(self):
-        self.InvokeGCC_XML(self.batch_gccxml_tasks[-1])
-        self.batch_gccxml_tasks = self.batch_gccxml_tasks[:-1]
+        if self.InvokeGCC_XML(self.batch_gccxml_tasks[-1]):
+            self.batch_gccxml_tasks = self.batch_gccxml_tasks[:-1]
+            return True
+        else:
+            return False
 
     def OnGCC_XML(self, event):
         path = self.GetSelectedHeader()
@@ -309,10 +319,9 @@ class MainWindow(MainWindowBase.MainWindowBase):
             self.logger.SetValue(u"Please select one header first.")
             return
 
-        self.InvokeGCC_XML(path)
-
-        self.logger.Clear()
-        self.EnableConsole(False)
+        if self.InvokeGCC_XML(path):
+            self.logger.Clear()
+            self.EnableConsole(False)
 
     def OnGCC_XML_Done(self, event):
         if self.process.IsInputAvailable():
@@ -377,8 +386,8 @@ class MainWindow(MainWindowBase.MainWindowBase):
                 if os.path.isfile(file_path):
                     if f.endswith(self.mod_proj.output_cxx_ext):
                         os.unlink(file_path)
-            except Exception, e:
-                print(e)
+            except:
+                traceback.print_exc()
 
         self.MakeToast(u"All output files deleted")
 
@@ -426,13 +435,18 @@ class MainWindow(MainWindowBase.MainWindowBase):
 
         with Modules.RedirectStdStreams.RedirectStdStreams(self.redirector, self.redirector):
             for header in self.Enabled():
-                print header
-                self.Parse(header)
+                print(header)
+                try:
+                    self.Parse(header)
+                except:
+                    traceback.print_exc()
+                    return
 
             self.FinishAndWriteBack()
             self.Save()
 
-            PrintAndClearIgnoredSymbolsRegistry()
+            if self.print_ignored:
+                PrintAndClearIgnoredSymbolsRegistry()
 
     def OnEnableHeader(self, event):
         self.Serialize()
@@ -455,7 +469,8 @@ class MainWindow(MainWindowBase.MainWindowBase):
             self.FinishAndWriteBack()
             self.Save()
 
-            PrintAndClearIgnoredSymbolsRegistry()
+            if self.print_ignored:
+                PrintAndClearIgnoredSymbolsRegistry()
 
     def OnRewriteAll(self, event):
         self.logger.Clear()
@@ -473,8 +488,8 @@ class MainWindow(MainWindowBase.MainWindowBase):
         try:
             self.current.root_mod.finish_processing()
             self.Save()
-        except RuntimeError, e:
-            print(e)
+        except RuntimeError:
+            traceback.print_exc()
             return
 
         if not self.logger.IsEmpty():
@@ -551,4 +566,6 @@ class MainWindow(MainWindowBase.MainWindowBase):
             self.FinishAndWriteBack()
             self.Save()  # Save current project
 
-            PrintAndClearIgnoredSymbolsRegistry()
+            if self.print_ignored:
+                PrintAndClearIgnoredSymbolsRegistry()
+
