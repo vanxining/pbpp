@@ -47,7 +47,7 @@ ctor_chk_abstract = '''if (Py_TYPE(self) == &%(PYTYPE_NAME)s) {
 '''
 
 constructing = '''PBPP_BEGIN_ALLOW_THREADS
-auto cxx_obj = new %s(%%s);
+%s *cxx_obj = new %s(%%s);
 PBPP_END_ALLOW_THREADS
 
 self->cxx_obj = cxx_obj;'''
@@ -214,12 +214,6 @@ extract_pointer = '''if (PyObject_TypeCheck(py_%(VAR_NAME)s, &%(PYTYPE)s)) {
 <<<
 }'''
 
-no_defv_error_check = '''else {
->>>
-%s
-<<<
-}'''
-
 check_and_extract_as_bool = '''if (py_%(VAR_NAME)s) {
     %(VAR_NAME)s = (PyObject_IsTrue(py_%(VAR_NAME)s) == 1);
 }'''
@@ -357,8 +351,7 @@ borrower2 = '''PyObject *%(BORROWER)s(const %(CLASS)s &from) {
     if (typeid(from).name() == typeid(%(WRAPT)s).name()) {
         pyobj = ((%(WRAPT)s &) from).self;
         Py_INCREF(pyobj);
-    }
-    else {
+    } else {
         pyobj = PyObject_New(%(PYOBJ_STRUCT)s, &%(PYTYPE)s);
         pyobj->cxx_obj = (%(WRAPT)s *) &from;
         pyobj->fp_offset_base = FixBasePtr;
@@ -385,8 +378,7 @@ borrow_from_ptr = '''PyObject *%(PY_VAR_NAME)s_raw;
 if (%(PTR)s) {
     PyObject *%(BORROWER)s(const %(CLASS)s &from);
     %(PY_VAR_NAME)s_raw = %(BORROWER)s(%(REF)s);
-}
-else {
+} else {
     Py_INCREF(Py_None);
     %(PY_VAR_NAME)s_raw = Py_None;
 }'''

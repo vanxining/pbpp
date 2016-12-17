@@ -687,7 +687,7 @@ class Class:
 
 
             pyside_debug_name = "%s::%s" % (self.full_name, self.name,)
-            action = Code.Snippets.constructing % self.get_wrapt_class_name()
+            action = Code.Snippets.constructing % ((self.get_wrapt_class_name(),) * 2)
 
             if len(self.ctors) == 1:
                 args = self.ctors[0]
