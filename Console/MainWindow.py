@@ -17,7 +17,9 @@ import MainWindowBase
 
 from ProjectBase import make_temp_cpp_header, remove_possible_temp_cpp_header
 
+# noinspection PyUnresolvedReferences
 import wx
+# noinspection PyUnresolvedReferences
 import newevent
 
 
@@ -62,6 +64,7 @@ def PrintAndClearIgnoredSymbolsRegistry():
     Session.clear_ignored_symbols_registry()
 
 
+# noinspection PyBroadException,PyUnusedLocal
 class MainWindow(MainWindowBase.MainWindowBase):
     def __init__(self, parent):
         MainWindowBase.MainWindowBase.__init__(self, parent)
@@ -525,6 +528,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
         else:
             self.logger.SetValue(u"Not found.")
 
+    # noinspection PyProtectedMember
     def OnStats(self, event):
         for cls in sorted(Registry._registry.values()):
             self.logger.AppendText(cls.full_name + u"\n")
