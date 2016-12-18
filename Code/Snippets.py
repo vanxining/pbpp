@@ -435,11 +435,12 @@ Py_RETURN_NONE;'''
 # Function overload
 
 overloading_exception_cache = '''PyObject *exceptions[%d + 1] = {};
-pbpp::ExceptionArrayDestructor exdtor(exceptions);
+PyObject **exc_ptr = &exceptions[0];
+pbpp::ExceptionArrayDestructor exc_dtor(exceptions);
 '''
 
 overloading_label = "__%(FUNC_NAME)s_OVERLOAD_%(INDEX)d"
-overloading_cache_exception = "pbpp::CachePythonException(&exceptions[%d]);\n"
+overloading_cache_exception = "pbpp::CachePythonException(exc_ptr++);\n"
 overloading_restore_exceptions = "pbpp::RestorePythonExceptions(exceptions, %d);\n\n"
 
 

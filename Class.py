@@ -609,7 +609,7 @@ class Class:
                                len(signatures)) + err_return
 
             with CodeBlock.BracketThis(self.block, "___OVERLOAD___() "):
-                r = Code.Snippets.overloading_cache_exception % index + err_handler
+                r = Code.Snippets.overloading_cache_exception + err_handler
                 self._write_args_parsing_code(sig, r, pyside_debug_name)
 
                 self.block.write_code(action % sig.get_parameters_string())

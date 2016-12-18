@@ -105,6 +105,8 @@ class ExceptionArrayDestructor {
 public:
 
     /// 构造函数
+    ///
+    /// @param exceptions 需要保证数组最后一个元素为 nullptr
     ExceptionArrayDestructor(PyObject **exceptions);
 
     /// 析构函数

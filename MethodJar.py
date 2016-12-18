@@ -341,7 +341,7 @@ def _write_overloads(block, namer, func_name, signatures, err_return, actions,
                            len(signatures)) + err_return
 
         with CodeBlock.BracketThis(block, "___OVERLOAD___() "):
-            r = Code.Snippets.overloading_cache_exception % index + err_handler
+            r = Code.Snippets.overloading_cache_exception + err_handler
             sig.write_args_parsing_code(block, namer, True, r, pyside_debug_name)
 
             block.write_code(action % sig.get_parameters_string())
