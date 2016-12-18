@@ -82,7 +82,7 @@ const 重载 -- X::Func1()
 文件列表支持 Drag & Drop
 函数指针
 全文本定义的黑名单
-获取  CastXML 的编译错误信息
+获取 CastXML 的编译错误信息
 
 PyInt 的范围
 
