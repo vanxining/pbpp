@@ -231,6 +231,10 @@ for (Py_ssize_t i = 0; i < __len; i++) {
     v2.push_back(item);
 }''')
 
+        header_jar = Session.header_jar()
+        self.assertEqual(header_jar.concat_sorted(), '#include "_List.hxx"')
+        header_jar.clear()
+
         tp = Types.Type(("std::map<int,int>", "const", "&",), 20, "Class")
         block.write_code(tp.get_build_value_idecl("m", namer=namer))
         block.write_code(tp.get_extractor_code("m2", "py_m", "return nullptr;", namer))
@@ -262,6 +266,8 @@ while (PyDict_Next(py_m, &__pos, &py_dict_key, &py_dict_value)) {
     int value = pbpp::Types::ToInt(py_dict_value);
     m2[key] = value;
 }''')
+        self.assertEqual(header_jar.concat_sorted(), '#include "_Dict.hxx"')
+        header_jar.clear()
 
 
 if __name__ == "__main__":

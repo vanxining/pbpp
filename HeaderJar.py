@@ -1,9 +1,9 @@
-__author__ = 'wxn'
+
+exts = (".h", ".hpp", ".hxx", ".h++", ".hcc", ".hh")
 
 
 class HeaderJar:
     def __init__(self):
-        self.exts = (".h", ".hpp", ".hxx", ".h++", ".hcc", ".hh")
         self.headers = []
         self.globals = []
 
@@ -19,7 +19,7 @@ class HeaderJar:
                     self.headers.append(decl)
             else:
                 pos = header.rfind(".")
-                if pos == -1 or header[pos:].lower() not in self.exts:
+                if pos == -1 or header[pos:].lower() not in exts:
                     header += ".h"
 
                 decl = '#include "%s"' % header
@@ -49,3 +49,7 @@ class HeaderJar:
             ret += "\n\n" + '\n'.join(sorted(self.globals))
 
         return ret
+
+    def clear(self):
+        self.headers = []
+        self.globals = []
