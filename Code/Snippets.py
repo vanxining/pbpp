@@ -1,4 +1,7 @@
 
+define_module_ptr = '''extern "C" PyObject *{0};
+PyObject *{0} = nullptr;'''
+
 module_creator_header = '''
 extern "C" PyObject *%(FUNC_NAME)s(PyObject *parent) {
     PyObject *m = CreateModule("%(MNAME_FULL)s");

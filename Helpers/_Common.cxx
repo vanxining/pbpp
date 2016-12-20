@@ -81,7 +81,7 @@ bool IsInteger(PyObject *obj) {
     return PyLong_Check(obj);
 }
 
-bool Types::IsNumber(PyObject *obj) {
+bool IsNumber(PyObject *obj) {
     return IsInteger(obj) || PyFloat_Check(obj);
 }
 

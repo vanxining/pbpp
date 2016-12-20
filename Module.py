@@ -528,7 +528,7 @@ class Module:
 
         module_ptr = "__mod_" + self.get_creator_name().lower()
 
-        block.write_code('extern "C" PyObject *%s = nullptr;' % module_ptr)
+        block.write_code(Code.Snippets.define_module_ptr.format(module_ptr))
         block.write_code(Code.Snippets.module_creator_header % template_args)
         block.indent()
 
