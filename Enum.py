@@ -64,21 +64,3 @@ class Enum:
         block.write_code("};")
 
         block.write_code(action)
-
-
-def test_enum(file_id, context):
-    enum = Enum()
-    enum.process(r, file_id, context, VdkPythonNamer())
-
-    for name in sorted(enum.values.keys()):
-        print(name, "==>", enum.values[name])
-
-    print("")
-
-if __name__ == "__main__":
-    import xml.etree.ElementTree as ET
-    r = ET.parse("Tests/Y.xml").getroot()
-
-    from Console.VdkControls.VdkControls import VdkPythonNamer
-    test_enum("f1", "_1")
-    test_enum("f1", "_325")

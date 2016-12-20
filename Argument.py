@@ -57,13 +57,3 @@ class Argument:
     @staticmethod
     def _defv_from_xml(node):
         return node.attrib.get("default")
-
-if __name__ == "__main__":
-    import xml.etree.ElementTree as ET
-
-    _root = ET.parse("Console/Raw/Xml/V.xml").getroot()
-
-    n = _root.find(".//Method[@id='_185']")[0]
-    a = from_xml(_root, n)
-
-    print a.type.declare_var(a.name, a.defv)
