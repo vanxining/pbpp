@@ -45,7 +45,10 @@ class PythonNamer:
         return name.rstrip("_")
 
     def _to_python(self, name):
-        raise NotImplementedError
+        if '<' in name:
+            name = PythonNamer.normalize_template(name)
+
+        return name
 
     def to_python(self, name):
         return self.fmt_path(name).replace('.', '_')
