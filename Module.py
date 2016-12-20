@@ -125,7 +125,7 @@ class HeaderProvider:
 
     @staticmethod
     def pch():
-        return '#include "StdAfx.hpp"'
+        return ""
 
 
 class BlackList:
@@ -540,14 +540,14 @@ class Module:
             creator = submodule.get_creator_name()
             block.write_code("PyObject *%s(PyObject *parent);" % creator)
 
-        if len(self.submodules) > 1:
+        if len(self.submodules) > 0:
             block.append_blank_line()
 
         for submodule in self.submodules.values():
             creator = submodule.get_creator_name()
             block.write_code("%s(m);" % creator)
 
-        if len(self.submodules) > 1:
+        if len(self.submodules) > 0:
             block.append_blank_line()
 
         for cls in self.classes.values():
@@ -610,8 +610,9 @@ class Module:
                 Util.smart_write(path, content)
 
         for lines in (declarations, modules, invoke):
-            block.write_lines(lines)
-            block.append_blank_line()
+            if len(lines) > 0:
+                block.write_lines(lines)
+                block.append_blank_line()
 
 
 def process_header(mod, headers, fxml):
