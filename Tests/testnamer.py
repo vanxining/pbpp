@@ -2,13 +2,14 @@
 from ..Module import PythonNamer
 
 
-class MyNamer(PythonNamer):
+class TestNamer(PythonNamer):
     @staticmethod
     def package():
-        return "Raw"
+        return "Test"
 
     def _to_python(self, name):
         if '<' in name:
+            # Remove STL containers' allocator template argument.
             for container in ("vector", "list", "set", "deque",):
                 if name.startswith(container):
                     name = name[:name.index(',')] + '>'

@@ -158,8 +158,8 @@ if (py_s != Py_None) {
 }''')
 
 
-        from mynamer import MyNamer
-        namer = MyNamer()
+        from testnamer import TestNamer
+        namer = TestNamer()
 
         tp = Types.Type(("wxSize", "const",), 16, "Class")
         block.write_code(tp.get_build_value_idecl("sz", namer=namer))
