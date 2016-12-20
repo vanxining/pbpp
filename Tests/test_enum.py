@@ -2,7 +2,7 @@
 import unittest
 import xml.etree.ElementTree as ET
 
-import testnamer
+from namer import TestNamer
 
 from .. import Enum
 from .. import CodeBlock
@@ -11,7 +11,7 @@ from .. import CodeBlock
 class TestEnum(unittest.TestCase):
     def runTest(self):
         root = ET.parse("Tests/raw/V.xml").getroot()
-        namer = testnamer.TestNamer()
+        namer = TestNamer()
 
         enum = Enum.Enum()
         enum.process(root, "f1", "_1", allows_protected=False, namer=namer)

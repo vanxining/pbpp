@@ -158,7 +158,7 @@ if (py_s != Py_None) {
 }''')
 
 
-        from testnamer import TestNamer
+        from namer import TestNamer
         namer = TestNamer()
 
         tp = Types.Type(("wxSize", "const",), 16, "Class")
