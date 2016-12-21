@@ -19,8 +19,8 @@ LT_CXX = 1
 LT_BORROWED = 2
 
 
-class Class:
-    class DummyDef:
+class Class(object):
+    class DummyDef(object):
         def __init__(self, **kwargs):
             self.name = kwargs["name"]
             self.full_name = kwargs["full_name"]

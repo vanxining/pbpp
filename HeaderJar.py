@@ -1,7 +1,7 @@
 exts = (".h", ".hpp", ".hxx", ".h++", ".hcc", ".hh")
 
 
-class HeaderJar:
+class HeaderJar(object):
     def __init__(self):
         self.headers = []
         self.globals = []

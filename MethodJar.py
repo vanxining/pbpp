@@ -15,7 +15,7 @@ class _InjectedMethod_TupleAndKeywords(TupleAndKeywords.TupleAndKeywords):
         return "cxx_obj, " + s if s else "cxx_obj"
 
 
-class Method:
+class Method(object):
     def __init__(self, root, node, free_function):
         self.name = node.attrib["name"]
         self.raw_sig = node.attrib["demangled"]
@@ -41,7 +41,7 @@ class Method:
         )
 
 
-class MethodJar:
+class MethodJar(object):
     def __init__(self):
         self.methods = {}
 

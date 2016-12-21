@@ -6,7 +6,7 @@ import tempfile
 import Registry
 
 
-class ProjectBase:
+class ProjectBase(object):
     def __init__(self, root_mod):
         self.root_mod = root_mod
         self.parsed = set()

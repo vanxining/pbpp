@@ -9,9 +9,9 @@ def get_file_node(root, fpath):
     assert False
 
 
-class Compressor:
+class Compressor(object):
 
-    class Blacklist:
+    class Blacklist(object):
         def __init__(self):
             pass
 

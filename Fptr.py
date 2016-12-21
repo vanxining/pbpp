@@ -1,4 +1,4 @@
-class FptrManager:
+class FptrManager(object):
     def __init__(self):
         self.fptrs = {}
 

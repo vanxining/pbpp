@@ -1,4 +1,4 @@
-class CodeBlock:
+class CodeBlock(object):
     def __init__(self, init_indent_cnt=0):
         self.lines = []
         self.indent_cnt = init_indent_cnt
@@ -77,7 +77,7 @@ class CodeBlock:
         self.lines = []
 
 
-class Scope:
+class Scope(object):
     def __init__(self, block):
         self.block = block
 
@@ -90,7 +90,7 @@ class Scope:
         self.block.write_code("} while (0);")
 
 
-class BracketThis:
+class BracketThis(object):
     def __init__(self, block, preamble=None, postscript=None):
         self.preamble = preamble or ""
         self.postscript = postscript or ""

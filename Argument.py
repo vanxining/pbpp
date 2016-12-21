@@ -8,7 +8,7 @@ def from_xml(root, node):
     return arg
 
 
-class Argument:
+class Argument(object):
     """Represents function argument as well as return type.
     """
 

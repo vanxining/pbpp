@@ -13,7 +13,7 @@ POINTER = 3
 CLASS = 4
 
 
-class Type:
+class Type(object):
     def __init__(self, decl_list, tid, tag):
         assert isinstance(decl_list, (list, tuple, deque,))
         assert len(decl_list) > 0
@@ -326,7 +326,7 @@ class Type:
         return block.flush()
 
 
-class PythonAwareClassRegistry:
+class PythonAwareClassRegistry(object):
 
     _registry = {}
 

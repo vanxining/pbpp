@@ -16,7 +16,7 @@ import Util
 
 
 # noinspection PyUnusedLocal
-class PythonNamer:
+class PythonNamer(object):
     def __init__(self):
         pass
 
@@ -100,7 +100,7 @@ class PythonNamer:
         return "__set_" + field_name
 
 
-class FlagsAssigner:
+class FlagsAssigner(object):
     def __init__(self):
         pass
 
@@ -108,7 +108,7 @@ class FlagsAssigner:
         return "pbpp::LifeTime::PYTHON"
 
 
-class HeaderProvider:
+class HeaderProvider(object):
     def __init__(self):
         pass
 
@@ -128,7 +128,7 @@ class HeaderProvider:
         return ""
 
 
-class Blacklist:
+class Blacklist(object):
     def __init__(self):
         pass
 
@@ -139,7 +139,7 @@ class Blacklist:
         return False
 
 
-class Module:
+class Module(object):
     def __init__(self, name, parent, namer, header_provider, flags_assigner, blacklist):
         self.name = name
         self.parent = parent

@@ -35,7 +35,7 @@ def classes():
         yield cls
 
 
-class _Class:
+class _Class(object):
     def __init__(self, cls):
         assert isinstance(cls, Class.Class)
 

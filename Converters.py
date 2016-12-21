@@ -6,7 +6,7 @@ import Types
 _converters = []
 
 
-class Converter:
+class Converter(object):
     def __init__(self):
         pass
 

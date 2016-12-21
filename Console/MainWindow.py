@@ -25,7 +25,7 @@ import Xml
 (WorkerFinishEvent, EVT_WORKER_FIN) = newevent.NewEvent()
 
 
-class Worker:
+class Worker(object):
     def __init__(self, main_window, runnable, done_listener=None):
         self.main_window = main_window
         self.runnable = runnable
@@ -42,7 +42,7 @@ class Worker:
         wx.PostEvent(self.main_window, event)
 
 
-class MyRedirector:
+class MyRedirector(object):
     def __init__(self, target):
         self.target = target
 
@@ -570,4 +570,3 @@ class MainWindow(MainWindowBase.MainWindowBase):
 
             if self.print_ignored:
                 PrintAndClearIgnoredSymbolsRegistry()
-

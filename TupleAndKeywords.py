@@ -5,7 +5,7 @@ import Session
 import Types
 
 
-class TupleAndKeywords:
+class TupleAndKeywords(object):
     def __init__(self):
         self.args = []
         self.unnamed_counter = 0

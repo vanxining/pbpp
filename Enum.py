@@ -2,7 +2,7 @@ import Access
 import Util
 
 
-class ScopedEnum:
+class ScopedEnum(object):
     def __init__(self, name, full_name):
         self.name = name
         self.full_name = full_name
@@ -10,7 +10,7 @@ class ScopedEnum:
         self.instantiated = False
 
 
-class Enum:
+class Enum(object):
     def __init__(self):
         self.values = {}
         self.scoped_enums = {}
