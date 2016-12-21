@@ -2,12 +2,25 @@ import importlib
 import os
 
 
-def smart_write(path, content):
+def smart_write(path, content, log=False):
     if not os.path.exists(path) or open(path).read() != content:
         with open(path, "w") as outf:
             outf.write(content)
 
-        print("Written `%s`." % os.path.realpath(path))
+        if log:
+            print("Written `%s`." % os.path.realpath(path))
+
+        return True
+
+    return False
+
+
+def smart_copy(src, dst, log=False):
+    content = open(src).read()
+
+    if smart_write(dst, content, log=False):
+        if log:
+            print("Copied to `%s`." % os.path.realpath(dst))
 
 
 def split_namespaces(namespaces):
@@ -96,24 +109,3 @@ def load2(name):
 
 def load(name):
     return load2(name)[0]
-
-
-def _test_context(root):
-    for node_id in ("_33",):
-        print context_of(root.find(".//*[@id='%s']" % node_id), root)
-
-
-def _test_full_name(root):
-    for node_id in ("_4",):
-        print full_name_of(root.find(".//*[@id='%s']" % node_id), root)
-
-
-if __name__ == "__main__":
-    print split_namespaces("std::vector<int, std::allocator<int> >")
-    print split_namespaces("std::vector<std::allocator<std::size_t>, std::allocator<int> >::const_iterator")
-
-    import xml.etree.ElementTree as ET
-    r = ET.parse("wx.xml").getroot()
-
-    _test_full_name(r)
-    _test_context(r)
