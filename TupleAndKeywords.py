@@ -311,33 +311,31 @@ class TupleAndKeywords(object):
         return ", ".join([a.type.decl() for a in self.args])
 
 
-def test_empty():
+def _test_empty():
     tk = TupleAndKeywords()
 
-    print tk.get_keywords()
-    print tk.build_parser_idecl()
+    print(tk.get_keywords())
+    print(tk.build_parser_idecl())
 
     assert len(tk.build_function_signature_parameter_list()) == 0
 
 
-def test_fundamental():
+def _test_fundamental():
     tk = TupleAndKeywords()
     tk.add_parameter(Argument.Argument(Types.Type(("int",), 1, "FundamentalType"), "foo", 10))
     tk.add_parameter(Argument.Argument(Types.Type(("long int",), 2, "FundamentalType"), "bar", 20))
     tk.add_parameter(Argument.Argument(Types.Type(("int",), 3, "FundamentalType"), "mit", 30))
 
-    print tk.get_fmt_specifier()
-    print tk.get_keywords()
-    print tk.build_parser_idecl()
-    print tk.build_function_signature_parameter_list()
+    print(tk.get_fmt_specifier())
+    print(tk.get_keywords())
+    print(tk.build_parser_idecl())
+    print(tk.build_function_signature_parameter_list())
 
 
-def test():
-    from Console.wxMSW.__wx__ import WxPythonNamer
-
+def _test():
+    import CodeBlock
     import Converters
     import HeaderJar
-    import CodeBlock
 
     header_jar = HeaderJar.HeaderJar()
     Session.begin(header_jar)
@@ -354,21 +352,22 @@ def test():
     tk.add_parameter(Argument.Argument(Types.Type(("bool",), 7, "FundamentalType"), "b"))
     tk.add_parameter(Argument.Argument(Types.Type(("wchar_t", "const", "*",), 8, "PointerType"), "str"))
 
-    print tk.get_fmt_specifier()
-    print tk.get_keywords()
-    print tk.build_function_signature_parameter_list()
+    print(tk.get_fmt_specifier())
+    print(tk.get_keywords())
+    print(tk.build_function_signature_parameter_list())
 
-    namer = WxPythonNamer()
+    from Module import PythonNamer
+    namer = PythonNamer()
 
-    print tk.build_parser_idecl(namer=namer)
-    empty_line()
+    print(tk.build_parser_idecl(namer=namer))
+    _print_empty_line()
 
     block = CodeBlock.CodeBlock()
     tk.write_args_parsing_code(block, namer, True, "return nullptr;", "<TEST>")
 
-    print block.flush()
-    empty_line()
-    empty_line()
+    print(block.flush())
+    _print_empty_line()
+    _print_empty_line()
 
     tk = TupleAndKeywords()
     tk.add_parameter(Argument.Argument(Types.Type(("int", "*",), 1, "FundamentalType"), "foo", "nullptr"))
@@ -381,7 +380,7 @@ def test():
     tk.add_parameter(Argument.Argument(Types.Type(("wchar_t", "const", "*",), 8, "PointerType"), "str", 'L"Hello world!"'))
     tk.write_args_parsing_code(block, namer, True, "return nullptr;", "<TEST>")
 
-    print block.flush()
+    print(block.flush())
 
     integer = Types.Type(("int",), 99, "FundamentalType")
     Converters.add(Converters.ListConv(integer))
@@ -390,7 +389,7 @@ def test():
     tk.add_parameter(Argument.Argument(Types.Type(("std::vector<int>", "const", "&",), 0, "Class"), "vi", "_vi"))
     tk.write_args_parsing_code(block, namer, True, "return nullptr;", "<TEST>")
 
-    print block.flush()
+    print(block.flush())
 
     K = Types.Type(("wchar_t", "const", "*",), 111, "PointerType")
     V = Types.Type(("wxColour", "*",), 112, "PointerType")
@@ -400,17 +399,18 @@ def test():
     tk.add_parameter(Argument.Argument(Types.Type(("std::map<wchar_t const *, wxColour *>", "&",), 0, "Class"), "m"))
     tk.write_args_parsing_code(block, namer, True, "return nullptr;", "<TEST>")
 
-    print block.flush()
+    print(block.flush())
 
 
-def empty_line():
-    print ""
+def _print_empty_line():
+    print("")
+
 
 if __name__ == "__main__":
-    test_empty()
+    _test_empty()
 
-    empty_line()
-    test_fundamental()
+    _print_empty_line()
+    _test_fundamental()
 
-    empty_line()
-    test()
+    _print_empty_line()
+    _test()
