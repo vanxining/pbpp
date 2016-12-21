@@ -71,7 +71,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
         self.SetIcon(wx.Icon(u"Icon.ico", wx.BITMAP_TYPE_ICO))
 
         usable = wx.GetClientDisplayRect()
-        w = int(usable.width * 0.5)
+        w = max(int(usable.width * 0.5), 750)
         h = int(usable.height * 0.75)
         self.SetSize(w, h)
         self.Centre(wx.BOTH)

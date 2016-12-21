@@ -89,7 +89,7 @@ class MainWindowBase(wx.Frame):
         btnSizer.Add(self.start, 0, wx.ALL, 5)
 
 
-        bottomSizer.Add(btnSizer, 0, wx.ALL, 5)
+        bottomSizer.Add(btnSizer, 0, wx.EXPAND, 5)
 
 
         mainSizer.Add(bottomSizer, 0, wx.EXPAND, 5)
