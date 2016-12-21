@@ -15,12 +15,12 @@ import Session
 import Util
 
 
+# noinspection PyUnusedLocal
 class PythonNamer:
     def __init__(self):
         pass
 
-    @staticmethod
-    def package():
+    def package(self):
         raise NotImplementedError
 
     def fmt_path(self, cxxpath):
@@ -128,7 +128,7 @@ class HeaderProvider:
         return ""
 
 
-class BlackList:
+class Blacklist:
     def __init__(self):
         pass
 
