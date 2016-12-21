@@ -1,12 +1,12 @@
 import importlib
 import os
-import shutil
 import subprocess
 import tempfile
 
 import config
 import customizer
 from ... import Module
+from ... import Util
 from ... import Xml
 
 
@@ -17,8 +17,8 @@ def _set_up(tc_dir):
     if not os.path.exists(tmp_dir) or not os.path.isdir(tmp_dir):
         os.mkdir(tmp_dir)
 
-    shutil.copy(tc_dir + "def.hpp", tmp_dir + "def.hpp")
-    shutil.copy(tc_dir + "../premake5.lua", tmp_dir + "premake5.lua")
+    Util.smart_copy(tc_dir + "def.hpp", tmp_dir + "def.hpp")
+    Util.smart_copy(tc_dir + "../premake5.lua", tmp_dir + "premake5.lua")
 
     return tmp_dir + "def.hpp"
 

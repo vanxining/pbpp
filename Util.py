@@ -2,7 +2,7 @@ import importlib
 import os
 
 
-def smart_write(path, content, log=False):
+def smart_write(path, content, log=True):
     if not os.path.exists(path) or open(path).read() != content:
         with open(path, "w") as outf:
             outf.write(content)
@@ -15,7 +15,7 @@ def smart_write(path, content, log=False):
     return False
 
 
-def smart_copy(src, dst, log=False):
+def smart_copy(src, dst, log=True):
     content = open(src).read()
 
     if smart_write(dst, content, log=False):

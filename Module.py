@@ -471,15 +471,17 @@ class Module(object):
 
     def _copy_helpers(self, outdir):
         dir_path = os.path.dirname(__file__) + "/Helpers/"
+        pch = self.header_provider.pch()
+
         for f in os.listdir(dir_path):
             local = dir_path + f
             remote = outdir + '/' + f
 
-            content = open(local).read()
-            if f.endswith(".cxx"):
-                content = self.header_provider.pch() + '\n' + content
-
-            Util.smart_write(remote, content)
+            if pch and f.endswith(".cxx"):
+                content = pch + '\n' + open(local).read()
+                Util.smart_write(remote, content)
+            else:
+                Util.smart_copy(local, remote)
 
     def generate(self, outdir, ext):
         for submodule in self.submodules.values():
