@@ -14,7 +14,6 @@ import newevent
 import wx
 
 import MainWindowBase
-import Modules.RedirectStdStreams
 import ProjectBase
 import Registry
 import Session
@@ -55,6 +54,22 @@ class MyRedirector(object):
 
     def flush(self):
         pass
+
+
+class RedirectStdStreams(object):
+    def __init__(self, stdout=None, stderr=None):
+        self._stdout = stdout or sys.stdout
+        self._stderr = stderr or sys.stderr
+
+    def __enter__(self):
+        self.old_stdout, self.old_stderr = sys.stdout, sys.stderr
+        self.old_stdout.flush(); self.old_stderr.flush()
+        sys.stdout, sys.stderr = self._stdout, self._stderr
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._stdout.flush(); self._stderr.flush()
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
 
 
 def PrintAndClearIgnoredSymbolsRegistry():
@@ -344,7 +359,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
             self.OnCompressDone()
 
     def DoCompress(self):
-        with Modules.RedirectStdStreams.RedirectStdStreams(self.redirector, self.redirector):
+        with RedirectStdStreams(self.redirector, self.redirector):
             headers = self.mod_proj.select_headers(self.hanging_header, self.hanging_xml)
             if len(headers) > 0:
                 c = Xml.Compressor()
@@ -434,7 +449,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
     def DoReparseAll(self):
         self.current = self.mod_proj.Project()
 
-        with Modules.RedirectStdStreams.RedirectStdStreams(self.redirector, self.redirector):
+        with RedirectStdStreams(self.redirector, self.redirector):
             for header in self.Enabled():
                 print(header)
                 try:
@@ -464,7 +479,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
         w.Start()
 
     def DoReparse(self):
-        with Modules.RedirectStdStreams.RedirectStdStreams(self.redirector, self.redirector):
+        with RedirectStdStreams(self.redirector, self.redirector):
             self.current.try_update()
             self.Parse(self.GetSelectedHeader())
             self.FinishAndWriteBack()
@@ -481,7 +496,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
         w.Start()
 
     def RewriteProxy(self):
-        with Modules.RedirectStdStreams.RedirectStdStreams(self.redirector, self.redirector):
+        with RedirectStdStreams(self.redirector, self.redirector):
             self.current.root_mod.mark_as_dirty()
             self.FinishAndWriteBack()
 
@@ -550,7 +565,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
         w.Start()
 
     def DoStart(self):
-        with Modules.RedirectStdStreams.RedirectStdStreams(self.redirector, self.redirector):
+        with RedirectStdStreams(self.redirector, self.redirector):
             if self.CountEnabled() == len(self.current.parsed):
                 self.TryRestoreFromStable()
 
