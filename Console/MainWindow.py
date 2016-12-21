@@ -1,26 +1,24 @@
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-import traceback
-import xml.etree.ElementTree as ET
 import ConfigParser
 import importlib
+import os
+import sys
 import thread
+import traceback
+import xml.etree.ElementTree as ET
 
+# noinspection PyUnresolvedReferences
+import newevent
+# noinspection PyUnresolvedReferences
+import wx
+
+import MainWindowBase
+import Modules.RedirectStdStreams
+import ProjectBase
 import Registry
 import Session
 import Xml
-
-import Modules.RedirectStdStreams
-import MainWindowBase
-
-from ProjectBase import make_temp_cpp_header, remove_possible_temp_cpp_header
-
-# noinspection PyUnresolvedReferences
-import wx
-# noinspection PyUnresolvedReferences
-import newevent
 
 
 (ProgressEvent, EVT_PROGRESS) = newevent.NewEvent()
@@ -136,7 +134,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
             if os.path.exists(wrapper):
                 path = wrapper
 
-        return make_temp_cpp_header(path)
+        return ProjectBase.make_temp_cpp_header(path)
 
     def PrepareList(self):
         items = []
@@ -336,7 +334,7 @@ class MainWindow(MainWindowBase.MainWindowBase):
         assert self.hanging_header and self.hanging_xml
 
         # Eliminate the temporary header
-        remove_possible_temp_cpp_header(self.hanging_header)
+        ProjectBase.remove_possible_temp_cpp_header(self.hanging_header)
 
         if os.path.exists(self.hanging_xml):
             worker = Worker(self, self.DoCompress, self.OnCompressDone)

@@ -1,11 +1,12 @@
 import copy
+
 import Access
 import Argument
+import Code.Snippets
 import CodeBlock
 import Session
 import TupleAndKeywords
 import Types
-import Code.Snippets
 
 
 class _InjectedMethod_TupleAndKeywords(TupleAndKeywords.TupleAndKeywords):

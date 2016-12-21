@@ -1,5 +1,5 @@
 import Access
-from Util import context_of
+import Util
 
 
 class ScopedEnum:
@@ -29,7 +29,7 @@ class Enum:
             if access == Access.PROTECTED and not allows_protected:
                 continue
 
-            ns_prefix = context_of(enum, root)
+            ns_prefix = Util.context_of(enum, root)
             if ns_prefix:
                 ns_prefix += "::"
 

@@ -1,11 +1,10 @@
+from collections import deque
+
 import Code.Snippets
 import CodeBlock
 import Converters
-import HeaderJar
 import Session
 import Util
-
-from collections import deque
 
 
 BUILT_IN = 1

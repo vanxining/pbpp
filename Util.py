@@ -1,6 +1,5 @@
-
-import os
 import importlib
+import os
 
 
 def smart_write(path, content):
@@ -86,10 +85,10 @@ def load2(name):
     if hasattr(mod, "_loadtime") and mtime > mod._loadtime:
         if pyc and os.path.exists(mod.__file__):
             os.remove(mod.__file__)
-        
+
         mod = reload(mod)
         reloaded = True
-    
+
     mod._loadtime = mtime
 
     return mod, reloaded

@@ -1,4 +1,3 @@
-
 class CodeBlock:
     def __init__(self, init_indent_cnt=0):
         self.lines = []

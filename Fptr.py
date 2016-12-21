@@ -1,5 +1,3 @@
-
-
 class FptrManager:
     def __init__(self):
         self.fptrs = {}

@@ -1,16 +1,16 @@
 import Access
-import Fptr
-import MethodJar
+import Argument
+import Code.Snippets
+import CodeBlock
 import Enum
+import Fptr
+import HeaderJar
+import MethodJar
 import Registry
 import Session
 import TupleAndKeywords
 import Types
-import Argument
-import Code.Snippets
-import CodeBlock
 import pytypeobject
-import HeaderJar
 
 
 # Object lifetime management policies

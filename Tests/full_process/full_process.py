@@ -6,7 +6,6 @@ import tempfile
 
 import config
 import customizer
-
 from ... import Module
 from ... import Xml
 

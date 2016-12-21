@@ -1,4 +1,3 @@
-
 define_module_ptr = '''extern "C" PyObject *{0};
 PyObject *{0} = nullptr;'''
 

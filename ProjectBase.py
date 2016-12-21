@@ -1,10 +1,9 @@
-
 import cPickle as pickle
 import os
 import shutil
 import tempfile
+
 import Registry
-import Xml
 
 
 class ProjectBase:
