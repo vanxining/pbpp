@@ -3,6 +3,5 @@ from .. import Module
 
 
 class TestNamer(Module.PythonNamer):
-    @staticmethod
-    def package():
+    def package(self):
         return "Test"
