@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<GCC_XML version="0.9.0" cvs_revision="1.139">
+  <Namespace id="_1" name="::" demangled="::" members="_2 _3 _4 _5 _6 _7 _8 _9 _10 _11"/>
+  <Class id="_2" name="type_info" demangled="type_info" context="_1" location="f0:0" file="f0" line="0" incomplete="1"/>
+  <Typedef id="_3" name="size_t" type="_12" context="_1" location="f0:0" file="f0" line="0"/>
+  <Typedef id="_4" name="__builtin_va_list" type="_13" context="_1" location="f0:0" file="f0" line="0"/>
+  <Enumeration id="_5" name="Color" context="_1" location="f1:2" file="f1" line="2" scoped="1">
+    <EnumValue name="RED" init="0"/>
+    <EnumValue name="GREEN" init="1"/>
+    <EnumValue name="BLUE" init="255"/>
+  </Enumeration>
+  <Class id="_6" name="UnexportedBase" demangled="UnexportedBase" context="_1" location="f1:8" file="f1" line="8" members="_14 _15 _16 _17 _18" size="32" align="32"/>
+  <Class id="_7" name="Derived" demangled="Derived" context="_1" location="f1:13" file="f1" line="13" members="_19 _20 _21 _22 _23" bases="_6" size="32" align="32">
+    <Base type="_6" access="public" virtual="0" offset="0"/>
+  </Class>
+  <Struct id="_8" name="Vector&lt;int&gt;" demangled="Vector&lt;int&gt;" context="_1" location="f1:19" file="f1" line="19" incomplete="1"/>
+  <Struct id="_9" name="Vector&lt;double&gt;" demangled="Vector&lt;double&gt;" context="_1" location="f1:19" file="f1" line="19" incomplete="1"/>
+  <Function id="_10" name="TestTemplate" returns="_24" context="_1" location="f1:23" file="f1" line="23" mangled="?TestTemplate@@YAXABU?$Vector@H@@@Z" demangled="TestTemplate(const Vector&lt;int&gt; &amp;)">
+    <Argument type="_25" location="f1:23" file="f1" line="23"/>
+  </Function>
+  <Typedef id="_11" name="DoubleVec" type="_9" context="_1" location="f1:25" file="f1" line="25"/>
+  <FundamentalType id="_12" name="unsigned int" size="32" align="32"/>
+  <PointerType id="_13" type="_26"/>
+  <Method id="_14" name="foo" returns="_24" context="_6" access="public" location="f1:10" file="f1" line="10" virtual="1" mangled="?foo@UnexportedBase@@UAEXXZ" demangled="UnexportedBase::foo()" attributes="__thiscall__"/>
+  <OperatorMethod id="_15" name="operator=" returns="_27" context="_6" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1" mangled="??4UnexportedBase@@QAEAAV0@ABV0@@Z" demangled="UnexportedBase::operator=(const UnexportedBase &amp;)" attributes="__thiscall__">
+    <Argument type="_28" location="f1:8" file="f1" line="8"/>
+  </OperatorMethod>
+  <Destructor id="_16" name="~UnexportedBase" context="_6" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1" demangled="UnexportedBase::~UnexportedBase()" attributes="__thiscall__"/>
+  <Constructor id="_17" name="UnexportedBase" context="_6" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1" demangled="UnexportedBase::UnexportedBase()" attributes="__thiscall__"/>
+  <Constructor id="_18" name="UnexportedBase" context="_6" access="public" location="f1:8" file="f1" line="8" inline="1" artificial="1" demangled="UnexportedBase::UnexportedBase(const UnexportedBase &amp;)" attributes="__thiscall__">
+    <Argument type="_28" location="f1:8" file="f1" line="8"/>
+  </Constructor>
+  <Method id="_19" name="foo" returns="_24" context="_7" access="public" location="f1:15" file="f1" line="15" virtual="1" overrides="_14" mangled="?foo@Derived@@UAEXXZ" demangled="Derived::foo()" attributes="__thiscall__"/>
+  <OperatorMethod id="_20" name="operator=" returns="_29" context="_7" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1" mangled="??4Derived@@QAEAAV0@ABV0@@Z" demangled="Derived::operator=(const Derived &amp;)" attributes="__thiscall__">
+    <Argument type="_30" location="f1:13" file="f1" line="13"/>
+  </OperatorMethod>
+  <Destructor id="_21" name="~Derived" context="_7" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1" demangled="Derived::~Derived()" attributes="__thiscall__"/>
+  <Constructor id="_22" name="Derived" context="_7" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1" demangled="Derived::Derived()" attributes="__thiscall__"/>
+  <Constructor id="_23" name="Derived" context="_7" access="public" location="f1:13" file="f1" line="13" inline="1" artificial="1" demangled="Derived::Derived(const Derived &amp;)" attributes="__thiscall__">
+    <Argument type="_30" location="f1:13" file="f1" line="13"/>
+  </Constructor>
+  <FundamentalType id="_24" name="void" size="0" align="8"/>
+  <ReferenceType id="_25" type="_8c"/>
+  <CvQualifiedType id="_8c" type="_8" const="1"/>
+  <ReferenceType id="_27" type="_6"/>
+  <ReferenceType id="_28" type="_6c"/>
+  <CvQualifiedType id="_6c" type="_6" const="1"/>
+  <ReferenceType id="_29" type="_7"/>
+  <ReferenceType id="_30" type="_7c"/>
+  <CvQualifiedType id="_7c" type="_7" const="1"/>
+  <FundamentalType id="_26" name="char" size="8" align="8"/>
+  <File id="f0" name="&lt;builtin&gt;"/>
+  <File id="f1" name="compressor.hpp"/>
+</GCC_XML>

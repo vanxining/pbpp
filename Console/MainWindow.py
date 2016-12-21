@@ -300,8 +300,6 @@ class MainWindow(MainWindowBase.MainWindowBase):
         if not self.Ask():
             return
 
-        Xml.clear()
-
         for header in self.Enabled():
             self.batch_gccxml_tasks.append(header)
 
@@ -351,7 +349,9 @@ class MainWindow(MainWindowBase.MainWindowBase):
         with Modules.RedirectStdStreams.RedirectStdStreams(self.redirector, self.redirector):
             headers = self.mod_proj.select_headers(self.hanging_header, self.hanging_xml)
             if len(headers) > 0:
-                Xml.Compressor(headers, self.hanging_xml, self.hanging_xml)
+                c = Xml.Compressor()
+                c.compress(headers, self.hanging_xml, self.hanging_xml)
+
                 print(u"Written to `%s`." % self.hanging_xml)
             else:
                 print(u"Error compressing XML output for `%s`: No headers selected." %

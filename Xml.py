@@ -1,18 +1,6 @@
 import xml.etree.ElementTree as ET
 
 
-def load(inf):
-    Compressor.load(inf)
-
-
-def save(outf):
-    Compressor.save(outf)
-
-
-def clear():
-    Compressor.clear()
-
-
 def get_file_node(root, fpath):
     for fnode in root.findall("File"):
         if fnode.attrib["name"] == fpath:
@@ -23,45 +11,33 @@ def get_file_node(root, fpath):
 
 class Compressor:
 
-    class BlackList:
+    class Blacklist:
         def __init__(self):
             pass
 
         def base(self, full_name):
             raise NotImplementedError
 
+    def __init__(self):
+        self.tree = None
+        self.root = None
+        self.blacklist = None
+        self.localized_templates = set()
+        self.header_ids = []
 
-    def __init__(self, headers, fxml, fxml_out, blacklist=None):
+    def compress(self, headers, fxml, fxml_out, blacklist=None):
         assert isinstance(headers, (list, tuple, set,))
         assert len(headers) > 0
-
-        self.fxml = fxml
-        self.blacklist = blacklist
-
-        self.localized_templates = set()
 
         self.tree = ET.parse(fxml)
         self.root = self.tree.getroot()
 
-        self.header_ids = []
+        self.blacklist = blacklist
+
         self._prepare(headers)
-
         self._iterate_and_mark()
-
         self._rebuild_xml()
         self.tree.write(fxml_out)
-
-    @staticmethod
-    def load(inf):
-        pass
-
-    @staticmethod
-    def save(outf):
-        pass
-
-    @staticmethod
-    def clear():
-        pass
 
     def _prepare(self, headers):
         for header in headers:
@@ -86,7 +62,7 @@ class Compressor:
                 print(node.tag, node.attrib)
                 raise e
 
-        self.tree._setroot(new_root)
+        self.tree = ET.ElementTree(new_root)
         self.root = new_root
 
         self._strip_unused_namespaces(toplevel_ids)
@@ -140,7 +116,7 @@ class Compressor:
             args_and_retval.append(retval)
 
         self._do_reserve_type_nodes(args_and_retval)
-    
+
     def _do_reserve_type_nodes(self, nodes):
         for node in nodes:
             while True:
@@ -193,7 +169,7 @@ class Compressor:
         for node in depleted_bases:
             cls_node.remove(node)
 
-    def _strip_unused_namespaces(self, ids):
+    def _strip_unused_namespaces(self, toplevel_ids):
         depleted = []
 
         for ns in self.root.iter("Namespace"):
@@ -203,7 +179,7 @@ class Compressor:
             reserve = False
 
             for member in ns.attrib.get("members", "").split(' '):
-                if member in ids:
+                if member in toplevel_ids:
                     reserve = True
                     break
 
@@ -227,42 +203,3 @@ class Compressor:
 
         self.localized_templates.add(full_name)
         self.recompress = True
-
-
-def _test_blacklist():
-    import re
-
-    class MyBlackList(Compressor.BlackList):
-
-        _base_patters = [
-            re.compile(r"std::_Vector_base<.+, std::allocator<.+> >"),
-        ]
-
-        _bases = []
-
-        def base(self, full_name):
-            for pattern in self._base_patters:
-                if pattern.match(full_name):
-                    return True
-
-            return full_name in self._bases
-
-
-    c = Compressor((r"C:\Users\wxn\Desktop\X.h", r"C:\Users\wxn\Desktop\Y.h",),
-                    r"C:\Users\wxn\Desktop\X.xml",
-                    r"C:\Users\wxn\Desktop\XX.xml",
-                    blacklist=MyBlackList())
-
-    print(c.localized_templates)
-
-
-if __name__ == "__main__":
-    import time
-
-    t1 = time.time()
-    c = Compressor((r"filedlg.hpp",
-                    r"D:\Work\CppLibs\wxMSW\include\wx/msw/filedlg.h",),
-                    r"Tests/FILEDLG.xml", r"Tests/FILEDLG_x.xml")
-
-    t2 = time.time()
-    print("Time used: %gs" % (t2 - t1))
