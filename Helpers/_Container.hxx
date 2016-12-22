@@ -95,8 +95,7 @@ namespace Python {
         operator Cont *() {
             if (m_obj) {
                 return (m_obj == Py_None) ? nullptr : &m_cont;
-            }
-            else {
+            } else {
                 return m_defv;
             }
         }

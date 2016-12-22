@@ -10,11 +10,13 @@ namespace Python {
     class Dict : public Container<Cont> {
     public:
 
+        typedef Container<Cont> Super;
+
         /// 构造函数
         Dict(PyObject *obj, ReferenceType type,
              KeyExtractor key_extractor, KeyBuilder key_builder,
              ValExtractor val_extractor, ValBuilder val_builder)
-                : Container(obj, type),
+                : Super(obj, type),
                   m_key_extrator(key_extractor), 
                   m_key_builder(key_builder),
                   m_val_extrator(val_extractor),
@@ -24,7 +26,7 @@ namespace Python {
 
         /// 析构函数
         ~Dict() {
-            TryConvertBackToPython();
+            Super::TryConvertBackToPython();
         }
 
     private:
@@ -36,33 +38,33 @@ namespace Python {
             PyObject *py_key, *py_value;
             Py_ssize_t pos = 0;
 
-            while (PyDict_Next(m_obj, &pos, &py_key, &py_value)) {
+            while (PyDict_Next(Super::m_obj, &pos, &py_key, &py_value)) {
                 if (!m_key_extrator(py_key, key)) {
                     return false;
                 }
+
                 if (!m_val_extrator(py_value, value)) {
                     return false;
                 }
 
-                m_cont[key] = value;
+                Super::m_cont[key] = value;
             }
 
             return true;
         }
 
         virtual void DoConvertBackToPython() {
-            PyDict_Clear(m_obj);
+            PyDict_Clear(Super::m_obj);
 
-            for (auto &kv : m_cont) {
+            for (auto &kv : Super::m_cont) {
                 PyObject *py_key = nullptr, *py_value = nullptr;
 
                 if (m_key_builder(kv.first, py_key) && 
                     m_val_builder(kv.second, py_value)) {
-                        PyDict_SetItem(m_obj, py_key, py_value);
+                        PyDict_SetItem(Super::m_obj, py_key, py_value);
                         Py_DECREF(py_key);
                         Py_DECREF(py_value);
-                }
-                else {
+                } else {
                     break;
                 }
             }
