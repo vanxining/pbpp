@@ -32,11 +32,11 @@ def _set_up(tc_dir):
     return tmp_dir + "def.hpp"
 
 
-def _run_gccxml(fcpp):
+def _run_castxml(fcpp):
     xml_path = tmp_dir + os.path.basename(fcpp) + ".xml"
     cmd = '%s %s -o "%s" "%s"' % (
-        config.gccxml_bin,
-        config.gccxml_args,
+        config.castxml_bin,
+        config.castxml_args,
         xml_path,
         fcpp,
     )
@@ -88,10 +88,9 @@ def _import(package_name):
 
 
 def _clean():
-    for root, _, files in os.walk(tmp_dir):
-        for f in files:
-            if f.endswith(".py.cxx") or f.endswith(".cpp"):
-                os.remove(tmp_dir + f)
+    for f in os.listdir(tmp_dir):
+        if f.endswith(".py.cxx") or f.endswith(".cpp"):
+            os.remove(tmp_dir + f)
 
 
 def _print_header(package_name):
@@ -110,14 +109,14 @@ def run(tc_dir):
 
     _print_header(package_name)
 
-    fcpp = _set_up(tc_dir)
-    fxml = _run_gccxml(fcpp)
-    _compress(fcpp, fxml)
-    _generate(package_name, fxml)
-
     owd = os.getcwd()
 
     try:
+        fcpp = _set_up(tc_dir)
+        fxml = _run_castxml(fcpp)
+        _compress(fcpp, fxml)
+        _generate(package_name, fxml)
+
         os.chdir(tmp_dir)
         _create_makefile(package_name)
         _build()

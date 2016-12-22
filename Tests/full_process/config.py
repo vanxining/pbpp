@@ -1,5 +1,14 @@
-gccxml_bin = r'D:\CppSource\Temp\CastXML\vcbuild\bin\RelWithDebInfo\castxml.exe'
-gccxml_args = r'--castxml-gccxml -w -x c++ -std=c++14 -fms-compatibility-version=19 -D__GCCXML__'
-premake_bin = r'premake5'
-pyroot = r'C:\Python27'
-make = r'mingw32-make'
+import os
+
+
+castxml_bin = "castxml"
+castxml_args = "--castxml-output=1 -w -x c++ -std=c++14 -D__PBPP__"
+premake_bin = "premake5"
+
+if os.name == "nt":
+    castxml_args += " -fms-compatibility-version=19"
+    pyroot = r"C:\Python27"
+    make = "mingw32-make"
+else:  # posix
+    pyroot = ""
+    make = "make"
