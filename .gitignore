@@ -1,9 +1,14 @@
-.idea
-Xml
+
+*.iml
+.idea/workspace.xml
+.idea/misc.xml
+.idea/modules.xml
 
 *.pyc
+*.swp
+
 *.ini
 
-Test.bat
+Console/Test.bat
 *.lnk
 Thumbs.db
