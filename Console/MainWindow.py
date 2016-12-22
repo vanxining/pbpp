@@ -66,7 +66,7 @@ class RedirectStdStreams(object):
         self.old_stdout.flush(); self.old_stderr.flush()
         sys.stdout, sys.stderr = self._stdout, self._stderr
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, tb):
         self._stdout.flush(); self._stderr.flush()
         sys.stdout = self.old_stdout
         sys.stderr = self.old_stderr
@@ -93,6 +93,9 @@ class MainWindow(MainWindowBase.MainWindowBase):
         self.config.read("Settings.ini")
         self.proj_dir = self.config.get("Default", "proj")
         self.print_ignored = self.config.getboolean("Default", "print_ignored")
+
+        if not os.path.isdir(self.proj_dir):
+            raise RuntimeError("Not a PyBridge++ project directory: `%s`" % self.proj_dir)
 
         sys.path.append(os.path.abspath(self.proj_dir))
         self.mod_proj = importlib.import_module("Project")
