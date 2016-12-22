@@ -15,7 +15,7 @@ import Session
 import Util
 
 
-# noinspection PyUnusedLocal
+# noinspection PyUnusedLocal,PyMethodMayBeStatic
 class PythonNamer(object):
     def __init__(self):
         pass
@@ -131,6 +131,7 @@ class HeaderProvider(object):
         return ""
 
 
+# noinspection PyUnusedLocal,PyMethodMayBeStatic
 class Blacklist(object):
     def __init__(self):
         pass
@@ -490,8 +491,6 @@ class Module(object):
         for submodule in self.submodules.values():
             submodule.generate(outdir, ext)
 
-        Session.begin(self.header_jar)
-
         output_path = "%s%s%s.py%s" % (
             outdir, os.path.sep, self._pyside_full_name(), ext
         )
@@ -501,6 +500,10 @@ class Module(object):
 
         if not self.modified and os.path.exists(output_path):
             return
+
+        # Return this function with care:
+        #   Remember to call Session.end()
+        Session.begin(self.header_jar)
 
         fp_mem_block = CodeBlock.CodeBlock()
         fptrs = Fptr.FptrManager()

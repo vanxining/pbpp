@@ -198,15 +198,19 @@ class TupleAndKeywords(object):
 
                         to_cxx.append(arg.type.declare_var(arg.name, init_expr))
                     else:
-                        var_ptr = arg.name + "_ptr"  # TODO:
-                        to_cxx.append(cpp_ptr_type.declare_var(var_ptr, "&(%s)" % arg.defv))
+                        # TODO: potential name conflit
+                        defv_rv = arg.name + "_defv_rv"
+                        var_ptr = arg.name + "_ref2ptr"
+
+                        to_cxx.append("auto &&%s_defv_rv = %s;" % (arg.name, arg.defv))
+                        to_cxx.append(cpp_ptr_type.declare_var(var_ptr, '&' + defv_rv))
 
                         to_cxx.append("if (py_%s) {" % arg.name)
                         to_cxx.append(">>>")
                         to_cxx.append(var_ptr + ' = ' + Code.Snippets.external_type_real_ptr % {
-                            "CLASS": arg.type.intrinsic_type(),
-                            "PYOBJ_PTR": "py_" + arg.name
-                        } + ';')
+                                "CLASS": arg.type.intrinsic_type(),
+                                "PYOBJ_PTR": "py_" + arg.name
+                            } + ';')
                         to_cxx.append("<<<")
                         to_cxx.append("}")
 

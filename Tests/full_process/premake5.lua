@@ -16,7 +16,7 @@ workspace(_OPTIONS["targetname"])
         targetdir(_OPTIONS["targetname"])
         targetname(_OPTIONS["targetname"])
 
-        files { "*.cxx" }
+        files { "*.cxx", "*.cpp" }
 
         if os.get() == "windows" then
             targetextension ".pyd"

@@ -6,6 +6,7 @@ import tempfile
 import config
 import customizer
 from ... import Module
+from ... import Registry
 from ... import Util
 from ... import Xml
 
@@ -18,6 +19,10 @@ def _set_up(tc_dir):
         os.mkdir(tmp_dir)
 
     Util.smart_copy(tc_dir + "def.hpp", tmp_dir + "def.hpp")
+    for f in os.listdir(tc_dir):
+        if f.endswith(".cpp"):
+            Util.smart_copy(tc_dir + f, tmp_dir + f)
+
     Util.smart_copy(tc_dir + "../premake5.lua", tmp_dir + "premake5.lua")
 
     return tmp_dir + "def.hpp"
@@ -44,16 +49,22 @@ def _compress(fcpp, fxml):
 
 
 def _generate(package_name, fxml):
-    m = Module.Module(package_name, None,
-                      customizer.namer(package_name),
-                      customizer.header_provider(),
-                      customizer.flags_assigner(),
-                      customizer.blacklist())
+    try:
+        m = Module.Module(package_name, None,
+                          customizer.namer(package_name),
+                          customizer.header_provider(),
+                          customizer.flags_assigner(),
+                          customizer.blacklist())
 
-    Module.process_header(m, ("def.hpp",), fxml)
+        Module.process_header(m, ("def.hpp",), fxml)
 
-    m.finish_processing()
-    m.generate(tmp_dir, ext=".cxx")
+        m.finish_processing()
+        m.generate(tmp_dir, ext=".cxx")
+    except:
+        raise
+    finally:
+        # Clear all saved classes.
+        Registry.clear()
 
 
 def _create_makefile(package_name):

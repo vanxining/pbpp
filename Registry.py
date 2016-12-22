@@ -67,7 +67,7 @@ def _do_sort_classes(klasses):
 
             return
 
-    print("\n\n")
+    print("")
     print([cls.full_name for cls in _sorted])
     print("")
 
