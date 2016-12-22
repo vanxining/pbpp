@@ -14,6 +14,10 @@ from ... import Xml
 tmp_dir = tempfile.gettempdir() + os.path.sep + "pbpp" + os.path.sep
 
 
+def _execute(cmd):
+    return subprocess.call(cmd, shell=True)
+
+
 def _set_up(tc_dir):
     if not os.path.exists(tmp_dir) or not os.path.isdir(tmp_dir):
         os.mkdir(tmp_dir)
@@ -37,7 +41,7 @@ def _run_gccxml(fcpp):
         fcpp,
     )
 
-    rc = subprocess.call(cmd)
+    rc = _execute(cmd)
     assert rc == 0
 
     return xml_path
@@ -68,14 +72,14 @@ def _generate(package_name, fxml):
 
 
 def _create_makefile(package_name):
-    rc = subprocess.call('"%s" gmake --targetname="%s" --pyroot="%s"' % (
+    rc = _execute('"%s" gmake --targetname="%s" --pyroot="%s"' % (
         config.premake_bin, package_name, config.pyroot
     ))
     assert rc == 0
 
 
 def _build():
-    rc = subprocess.call(config.make)
+    rc = _execute(config.make)
     assert rc == 0
 
 
