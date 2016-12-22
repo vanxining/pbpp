@@ -225,7 +225,9 @@ class Class(object):
         if not self._is_noncopyable():
             self._generate_copyer()
 
-        self.block.write_code("namespace {")
+        # Use a dummy subclass as method holder to invoke protected members.
+        method_holder = self.namer.method_holder(self.full_name)
+        self.block.write_code("#define __M " + method_holder)
 
         if self.allows_subclassing() or self.enum_class:
             if not self.enum_class:
@@ -246,7 +248,6 @@ class Class(object):
         self._generate_fields()
 
         self.block.write_code("}; // struct __M")
-        self.block.write_code("}  // namespace")
         self.block.append_blank_line()
 
         self._generate_method_table()

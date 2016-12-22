@@ -87,6 +87,9 @@ class PythonNamer(object):
     def wrapper_class(self, cls):
         return self.adaptively_rename(cls, "PythonHelper", prefix=False)
 
+    def method_holder(self, cls):
+        return self.adaptively_rename(cls, "MethodHolder", prefix=False)
+
     @staticmethod
     def free_function(name):
         return "__" + name
