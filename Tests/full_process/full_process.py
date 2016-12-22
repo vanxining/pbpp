@@ -90,7 +90,7 @@ def _import(package_name):
 def _clean():
     for root, _, files in os.walk(tmp_dir):
         for f in files:
-            if f.endswith(".py.cxx"):
+            if f.endswith(".py.cxx") or f.endswith(".cpp"):
                 os.remove(tmp_dir + f)
 
 
