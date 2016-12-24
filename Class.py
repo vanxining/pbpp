@@ -45,6 +45,7 @@ class Class(object):
         self.all_bases = None
         self.master_bases = None
 
+        self.has_public_copy_ctor = True
         self.final = False
 
         # No accessible canonical ctors -> disallow subclassing
@@ -59,10 +60,6 @@ class Class(object):
 
         # Instantiatable (new-able) != delete-able
         self.dtor_access_type = Access.PUBLIC
-
-        self.copy_ctor_access_type = Access.PUBLIC
-        self.base_private_copy_ctor_checked = False
-        self.arch_has_private_copy_ctor = False
 
         self.protected_nonvirtual_members = set()
         self.public_nonvirtual_methods = []
@@ -111,14 +108,11 @@ class Class(object):
             # Instantiating, destroying, copying or inheriting
             # a dummy class (object) is not allowed
 
+            self.has_public_copy_ctor = False
             self.final = True
 
             self.no_accessible_canonical_ctors = True
             self.dtor_access_type = Access.PRIVATE
-
-            self.copy_ctor_access_type = Access.PRIVATE
-            self.base_private_copy_ctor_checked = True
-            self.arch_has_private_copy_ctor = True
         else:
             Session.begin(self.header_jar)
 
@@ -222,10 +216,10 @@ class Class(object):
         if not self.enum_class:
             self._generate_borrower()
 
-        if not self._is_noncopyable():
+        if self._copy_ready():
             self._generate_copyer()
 
-        # Use a dummy subclass as method holder to invoke protected members.
+        # Use a dummy subclass as method holder to invoke protected members
         method_holder = self.namer.method_holder(self.full_name)
         self.block.write_code("#define __M " + method_holder)
 
@@ -432,9 +426,10 @@ class Class(object):
         else:
             self.block.write_code(Code.Snippets.borrower % template_args)
 
-    def _generate_copyer(self):
-        assert not self._is_noncopyable()
+    def _copy_ready(self):
+        return self.has_public_copy_ctor and not self._is_abstract()
 
+    def _generate_copyer(self):
         init_helper_self = ""
         if self._require_wrapper_class():
             init_helper_self = Code.Snippets.init_helper_self
@@ -621,20 +616,20 @@ class Class(object):
             self.block.write_code(label_ok + ':', temp_indent=0)
 
     def _constructors(self):
-        has_private_ctor = False
+        # If no copy constructor defined, the class is not copyable,
+        # which is ensured by Clang's semantic checking
+        # TODO: public copy assignment operator
+        copy_ctor_args_sig = "(const %s &)" % self.full_name
+        has_public_copy_ctor = False
 
         for ctor in self.root.findall("Constructor[@context='%s']" % self.node.attrib["id"]):
-            if ctor.attrib.get("artificial", None) == '1':
-                continue
-
             access = Access.access_type(ctor)
-            if access == Access.PRIVATE:
-                has_private_ctor = True
 
-            # Artificial copy constructors are public
-            args_sig = "(const %s &)" % self.full_name
-            if ctor.attrib["demangled"].endswith(args_sig):
-                self.copy_ctor_access_type = access
+            if ctor.attrib["demangled"].endswith(copy_ctor_args_sig):
+                # It is meaningless to copy an object whose class defines a proctected
+                # copy constructor in the API code we are dealing with
+                if access == Access.PUBLIC:
+                    has_public_copy_ctor = True
 
             if access != Access.PRIVATE:
                 if not self.blacklist.method(ctor.attrib["demangled"]):
@@ -646,11 +641,9 @@ class Class(object):
                     Session.ignored_methods.add(ctor.attrib["demangled"])
 
         if len(self.ctors) == 0:
-            if has_private_ctor:
-                self.no_accessible_canonical_ctors = True
-            else:
-                # Define a default ctor for easy generating
-                self.ctors.append(TupleAndKeywords.TupleAndKeywords())
+            self.no_accessible_canonical_ctors = True
+
+        self.has_public_copy_ctor = has_public_copy_ctor
 
     def _constructor(self, ctor):
         print(ctor.attrib["demangled"])
@@ -760,16 +753,6 @@ class Class(object):
 
         return False
 
-    def _is_noncopyable(self):
-        assert self.base_private_copy_ctor_checked
-
-        # Copying an object whose class defines a proctected copy constructor
-        # in the API code what we deal with is meaningless
-        # TODO: public copy assignment operator
-        return (self._is_abstract() or
-                self.copy_ctor_access_type != Access.PUBLIC or
-                self.arch_has_private_copy_ctor)
-
     def _expose_shadowed_non_virtuals(self):
         assert self.allows_subclassing()
 
@@ -829,21 +812,6 @@ class Class(object):
             self._expose_shadowed_non_virtuals()
 
         return self.virtual_members
-
-    def check_bases_copy_ctors(self):
-        if not self.base_private_copy_ctor_checked:
-            if self.copy_ctor_access_type == Access.PRIVATE:
-                self.arch_has_private_copy_ctor = True
-            else:
-                for base_full_name in self.direct_bases:
-                    base = Registry.get_class(base_full_name)
-                    if base.check_bases_copy_ctors():
-                        self.arch_has_private_copy_ctor = True
-                        break
-
-            self.base_private_copy_ctor_checked = True
-
-        return self.arch_has_private_copy_ctor
 
     def is_derived_from(self, base):
         if base in self.direct_bases:

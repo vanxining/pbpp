@@ -83,7 +83,6 @@ def sort_out():
     for cls in _registry.values():
         cls.collect_all_bases()
         cls.collect_virtual_members()
-        cls.check_bases_copy_ctors()
 
 
 def get_sorted():
