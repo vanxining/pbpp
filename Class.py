@@ -955,6 +955,8 @@ class Class(object):
                         self.block.append_blank_line()
                         self.block.write_code("return vm_retval;")
 
+            del self.block.lines[-1]  # Remove the last blank line.
+
     def _destructor(self):
         dtor = self.root.find("Destructor[@context='%s']" % self.node.attrib["id"])
         if dtor is not None:
@@ -972,7 +974,3 @@ class Class(object):
         })
 
         self.block.append_blank_line()
-
-
-if __name__ == "__main__":
-    pass
