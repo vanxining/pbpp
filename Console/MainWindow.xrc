@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwindows.org/wxxrc" version="2.3.0.1">
+	<object class="wxFrame" name="main_window">
+		<style>wxDEFAULT_FRAME_STYLE|wxFULL_REPAINT_ON_RESIZE|wxTAB_TRAVERSAL</style>
+		<bg>#f0f0f0</bg>
+		<font>
+			<size>9</size>
+			<style>normal</style>
+			<weight>normal</weight>
+			<underlined>0</underlined>
+			<face>Segoe UI</face>
+		</font>
+		<title>绑定控制台</title>
+		<centered>1</centered>
+		<aui_managed>0</aui_managed>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>4</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxCheckListBox" name="header_list" />
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxBoxSizer">
+									<orient>wxVERTICAL</orient>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxEXPAND</flag>
+										<border>5</border>
+										<object class="wxBoxSizer">
+											<orient>wxVERTICAL</orient>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL|wxEXPAND</flag>
+												<border>5</border>
+												<object class="wxButton" name="append_header">
+													<label>添加(_A)</label>
+													<default>0</default>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL|wxEXPAND</flag>
+												<border>5</border>
+												<object class="wxButton" name="remove_header">
+													<label>移除(_R)</label>
+													<default>0</default>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL|wxEXPAND</flag>
+												<border>5</border>
+												<object class="wxButton" name="enable_all_headers">
+													<label>启用所有(_E)</label>
+													<default>0</default>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL|wxEXPAND</flag>
+												<border>5</border>
+												<object class="wxButton" name="disable_all_headers">
+													<label>禁用所有(_D)</label>
+													<default>0</default>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag></flag>
+										<border>5</border>
+										<object class="wxBoxSizer">
+											<orient>wxVERTICAL</orient>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL</flag>
+												<border>5</border>
+												<object class="wxButton" name="reparse_header">
+													<label>重新解析(_P)</label>
+													<default>0</default>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL|wxEXPAND</flag>
+												<border>5</border>
+												<object class="wxButton" name="locate_xml">
+													<label>定位 XM_L</label>
+													<default>0</default>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxTextCtrl" name="logger">
+					<style>wxTE_MULTILINE|wxTE_READONLY</style>
+					<value></value>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="reparse_all_headers">
+									<label>重新解析所有头文件(_H)</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="save_as_stable">
+									<label>保存为稳定快照(_B)</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="restore_from_stable">
+									<label>恢复为稳定快照(_T)</label>
+									<default>0</default>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="castxml">
+									<tooltip>调用 CastXML 进行处理</tooltip>
+									<label>_CastXML</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="start">
+									<tooltip>开始分析列表中所有新加入但尚未解析过的头文件。\n若当前快照文件比稳定快照文件要新，那么当前快照会被替换为稳定的版本。</tooltip>
+									<label>开始处理(_S)</label>
+									<default>0</default>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+		<object class="wxStatusBar" name="status">
+			<style>wxST_SIZEGRIP</style>
+			<fields>1</fields>
+		</object>
+		<object class="wxMenuBar" name="menu_bar">
+			<label>menus</label>
+			<object class="wxMenu" name="file_menu">
+				<label>文件(_F)</label>
+				<object class="wxMenuItem" name="open_mi">
+					<label>打开(_O)...</label>
+					<help></help>
+				</object>
+				<object class="wxMenuItem" name="save_mi">
+					<label>保存(_S)</label>
+					<help></help>
+				</object>
+				<object class="wxMenuItem" name="save_as_mi">
+					<label>另存为(_A)...</label>
+					<help></help>
+				</object>
+				<object class="separator" />
+				<object class="wxMenuItem" name="save_as_stable_mi">
+					<label>保存为稳定状态(_B)</label>
+					<help></help>
+				</object>
+				<object class="wxMenuItem" name="restore_from_stable_mi">
+					<label>从稳定状态恢复(_R)</label>
+					<help></help>
+				</object>
+				<object class="separator" />
+				<object class="wxMenuItem" name="exit_mi">
+					<label>退出(_E)</label>
+					<help></help>
+				</object>
+			</object>
+			<object class="wxMenu" name="tools_menu">
+				<label>工具(_T)</label>
+				<object class="wxMenuItem" name="stats_mi">
+					<label>统计信息(_S)</label>
+					<help></help>
+				</object>
+				<object class="separator" />
+				<object class="wxMenuItem" name="castxml_all_mi">
+					<label>重新生成所有_XML文件</label>
+					<help></help>
+				</object>
+				<object class="wxMenuItem" name="reparse_all_headers_mi">
+					<label>重新解析所有头文件(_R)</label>
+					<help></help>
+				</object>
+				<object class="separator" />
+				<object class="wxMenuItem" name="clean_output_dir_mi">
+					<label>清理输出目录(_C)</label>
+					<help></help>
+				</object>
+				<object class="wxMenuItem" name="rewrite_all_output_files_mi">
+					<label>重新生成所有输出文件(_W)</label>
+					<help></help>
+				</object>
+			</object>
+			<object class="wxMenu" name="help_menu">
+				<label>帮助(_H)</label>
+				<object class="wxMenuItem" name="about_mi">
+					<label>关于(_A)</label>
+					<help></help>
+				</object>
+			</object>
+		</object>
+	</object>
+</resource>

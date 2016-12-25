@@ -12,7 +12,6 @@ sys.path = os.environ["PYWX"].split(';') + sys.path
 
 # noinspection PyUnresolvedReferences
 import wx
-import MainWindow
 
 
 class App(wx.PyApp):
@@ -23,7 +22,9 @@ class App(wx.PyApp):
     # noinspection PyMethodMayBeStatic,PyBroadException
     def OnInit(self):
         try:
-            win = MainWindow.MainWindow(parent=None)
+            from MainWindow import MainWindow
+
+            win = MainWindow()
             win.Show()
         except:
             traceback.print_exc()
