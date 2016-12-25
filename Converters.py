@@ -6,6 +6,7 @@ import Types
 _converters = []
 
 
+# noinspection PyMethodMayBeStatic
 class Converter(object):
     def __init__(self):
         pass
@@ -39,6 +40,9 @@ class Converter(object):
     def extracting_code(self, cpp_type, var_name, py_var_name, error_return, namer):
         raise NotImplementedError()
 
+    def copyable(self):
+        return True
+
     def value_building_interim_var(self, arg_name):
         return arg_name
 
@@ -51,12 +55,37 @@ def add(cvt):
     _converters.append(cvt)
 
 
-def find(cpp_type):
-    for cvt in _converters:
-        if cvt.match(cpp_type):
-            return cvt
+def push(cvt):
+    add(cvt)
 
-    return None
+
+def remove(cpp_type):
+    cvt, index = _find(cpp_type)
+    if cvt is not None:
+        global _converters
+        del _converters[index]
+
+
+def pop():
+    global _converters
+    return _converters.pop()
+
+
+def clear():
+    global _converters
+    _converters = []
+
+
+def find(cpp_type):
+    return _find(cpp_type)[0]
+
+
+def _find(cpp_type):
+    for index, cvt in enumerate(_converters):
+        if cvt.match(cpp_type):
+            return cvt, index
+
+    return None, -1
 
 
 class StrConv(Converter):
@@ -138,6 +167,7 @@ class WcsConv(Converter):
             )
 
 
+# noinspection PyAbstractClass
 class ContainerConv(Converter):
     def __init__(self, real_pytype):
         Converter.__init__(self)

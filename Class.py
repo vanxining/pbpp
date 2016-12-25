@@ -216,7 +216,7 @@ class Class(object):
         if not self.enum_class:
             self._generate_borrower()
 
-        if self._copy_ready():
+        if self.copy_ready():
             self._generate_copyer()
 
         # Use a dummy subclass as method holder to invoke protected members
@@ -322,7 +322,11 @@ class Class(object):
 
             self.block.append_blank_line()
 
-            self.block.write_code(f.type.get_build_value_idecl(
+            tmp_type = f.type
+            if f.type.is_class_value():
+                tmp_type = f.type.class_value_to_ref(const=True)
+
+            self.block.write_code(tmp_type.get_build_value_idecl(
                 "cxx_obj->" + f.raw_name, namer=self.namer
             ))
 
@@ -330,7 +334,8 @@ class Class(object):
             self.block.write_code("return py_%s;" % f.raw_name)
 
     def _generate_setter(self, f):
-        assert not f.type.is_ref()
+        if not f.type.is_copy_assignable():
+            return
 
         self.block.write_code(Code.Snippets.field_setter_sig % (
             self.namer.setter(f.raw_name), self.namer.pyobj(self.full_name)
@@ -372,10 +377,16 @@ class Class(object):
     def _generate_getset_table(self):
         self.block.write_code(Code.Snippets.field_table_begin)
 
+        def setter_name(field):
+            if field.type.is_copy_assignable():
+                return "__M::" + self.namer.setter(field.raw_name)
+            else:
+                return "nullptr"
+
         for f in self.fields:
             self.block.write_code(Code.Snippets.field_table_entry % {
                 "GETTER": "__M::" + self.namer.getter(f.raw_name),
-                "SETTER": "__M::" + self.namer.setter(f.raw_name),
+                "SETTER": setter_name(f),
                 "NAME": f.raw_name,
             })
 
@@ -426,7 +437,7 @@ class Class(object):
         else:
             self.block.write_code(Code.Snippets.borrower % template_args)
 
-    def _copy_ready(self):
+    def copy_ready(self):
         return self.has_public_copy_ctor and not self._is_abstract()
 
     def _generate_copyer(self):
@@ -620,12 +631,14 @@ class Class(object):
         # which is ensured by Clang's semantic checking
         # TODO: public copy assignment operator
         copy_ctor_args_sig = "(const %s &)" % self.full_name
+        copy_ctor_args_sig_no_const = "(%s &)" % self.full_name
         has_public_copy_ctor = False
 
         for ctor in self.root.findall("Constructor[@context='%s']" % self.node.attrib["id"]):
             access = Access.access_type(ctor)
 
-            if ctor.attrib["demangled"].endswith(copy_ctor_args_sig):
+            if (ctor.attrib["demangled"].endswith(copy_ctor_args_sig) or
+                ctor.attrib["demangled"].endswith(copy_ctor_args_sig_no_const)):
                 # It is meaningless to copy an object whose class defines a proctected
                 # copy constructor in the API code we are dealing with
                 if access == Access.PUBLIC:

@@ -3,6 +3,7 @@ from collections import deque
 import Code.Snippets
 import CodeBlock
 import Converters
+import Registry
 import Session
 import Util
 
@@ -122,16 +123,55 @@ class Type(object):
 
         return False
 
+    def is_copyable(self):
+        if self.is_class_value():
+            if self.cvt is not None:
+                return self.cvt.copyable()
+
+            return self.get_class().copy_ready()
+
+        return True
+
+    def is_copy_assignable(self):
+        if self.is_const():
+            return False
+
+        if self.is_ref():
+            return False
+
+        return self.is_copyable()
+
+    def get_class(self):
+        try:
+            cls = Registry.get_class(self.intrinsic_type())
+            assert cls is not None
+            return cls
+        except:
+            print(self.intrinsic_type())
+
+            import traceback
+            traceback.print_exc()
+
+            raise
+
     def ref_to_ptr(self):
         assert self.is_ptr_or_ref()
 
-        ret = [oper for oper in self.decl_list]
-        for index, oper in enumerate(ret):
+        decl_list = [oper for oper in self.decl_list]
+        for index, oper in enumerate(decl_list):
             if oper == '&':
-                ret[index] = '*'
+                decl_list[index] = '*'
                 break
 
-        return Type(ret, self.tid, self.tag)
+        return Type(decl_list, -self.tid, "PointerType")
+
+    def class_value_to_ref(self, const):
+        decl_list = [oper for oper in self.decl_list]
+        if const:
+            decl_list.append("const")
+        decl_list.append('&')
+
+        return Type(decl_list, -self.tid, "ReferenceType")
 
     def get_specifier(self):
         if self.is_built_in():
