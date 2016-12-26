@@ -7,7 +7,7 @@
 
 
 PyObject 标准 layout
-类型转换：wxString <==> str
+√类型转换：wxString <==> str
 union
 函数指针：
     在文件头进行 typedef
@@ -41,12 +41,12 @@ for (i = 0; i < NCCS; i++) {
 √模板类持久化，避免重复生成
 √不生成(屏蔽)某些基类
 
-可否 Enable 一个 wxSizer、一个 wxMenuBar？
+×可否 Enable 一个 wxSizer、一个 wxMenuBar？
 √在列表中启用、禁用某个头文件
 √按需包含 _Containers.hxx 头文件
 不需要写回时不要生成相应的 lambda 函数
 格式化模板声明（逗号、指针符、引用符）
-reference field (不要生成 setter)
+√reference field (不要生成 setter)
 √将 wxPyBind() 的常用版本提前【可以通过修改其raw_sig】
 添加一些标准函数：ReleaseOwnership() etc.
 PyModule_AddStringMacro
@@ -78,8 +78,8 @@ ccache
 const 重载 -- X::Func1()
 √当基类有虚函数与非虚函数的重载时，派生类无法调用基类的非虚函数
 允许不绑定特定的纯虚函数
-模板函数名有指针的情况的代码格式化
-文件列表支持 Drag & Drop
+函数模板的名字中有指针的情况时的代码格式化
+√文件列表支持 Drag & Drop
 函数指针
 全文本定义的黑名单
 获取 CastXML 的编译错误信息
