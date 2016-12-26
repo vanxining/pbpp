@@ -47,7 +47,7 @@
             <property name="size">-1,-1</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
             <property name="subclass"></property>
-            <property name="title">绑定控制台</property>
+            <property name="title">PyBridge++ Binding Console</property>
             <property name="tooltip"></property>
             <property name="window_extra_style"></property>
             <property name="window_name"></property>
@@ -209,7 +209,7 @@
                                             <property name="border">5</property>
                                             <property name="flag">wxEXPAND</property>
                                             <property name="proportion">1</property>
-                                            <object class="wxBoxSizer" expanded="1">
+                                            <object class="wxBoxSizer" expanded="0">
                                                 <property name="minimum_size"></property>
                                                 <property name="name">file_list_control_sizer</property>
                                                 <property name="orient">wxVERTICAL</property>
@@ -247,7 +247,7 @@
                                                         <property name="gripper">0</property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">添加(&amp;A)</property>
+                                                        <property name="label">&amp;Append</property>
                                                         <property name="max_size"></property>
                                                         <property name="maximize_button">0</property>
                                                         <property name="maximum_size"></property>
@@ -335,7 +335,7 @@
                                                         <property name="gripper">0</property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">移除(&amp;R)</property>
+                                                        <property name="label">&amp;Remove</property>
                                                         <property name="max_size"></property>
                                                         <property name="maximize_button">0</property>
                                                         <property name="maximum_size"></property>
@@ -423,7 +423,7 @@
                                                         <property name="gripper">0</property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">启用所有(&amp;E)</property>
+                                                        <property name="label">&amp;Enable all</property>
                                                         <property name="max_size"></property>
                                                         <property name="maximize_button">0</property>
                                                         <property name="maximum_size"></property>
@@ -511,7 +511,7 @@
                                                         <property name="gripper">0</property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">禁用所有(&amp;D)</property>
+                                                        <property name="label">&amp;Disable all</property>
                                                         <property name="max_size"></property>
                                                         <property name="maximize_button">0</property>
                                                         <property name="maximum_size"></property>
@@ -568,6 +568,16 @@
                                                 </object>
                                             </object>
                                         </object>
+                                        <object class="sizeritem" expanded="1">
+                                            <property name="border">5</property>
+                                            <property name="flag">wxEXPAND</property>
+                                            <property name="proportion">0</property>
+                                            <object class="spacer" expanded="1">
+                                                <property name="height">15</property>
+                                                <property name="permission">none</property>
+                                                <property name="width">0</property>
+                                            </object>
+                                        </object>
                                         <object class="sizeritem" expanded="0">
                                             <property name="border">5</property>
                                             <property name="flag"></property>
@@ -610,7 +620,7 @@
                                                         <property name="gripper">0</property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">重新解析(&amp;P)</property>
+                                                        <property name="label">Re&amp;parse</property>
                                                         <property name="max_size"></property>
                                                         <property name="maximize_button">0</property>
                                                         <property name="maximum_size"></property>
@@ -698,7 +708,7 @@
                                                         <property name="gripper">0</property>
                                                         <property name="hidden">0</property>
                                                         <property name="id">wxID_ANY</property>
-                                                        <property name="label">定位 XM&amp;L</property>
+                                                        <property name="label">Locate XM&amp;L</property>
                                                         <property name="max_size"></property>
                                                         <property name="maximize_button">0</property>
                                                         <property name="maximum_size"></property>
@@ -903,7 +913,7 @@
                                         <property name="gripper">0</property>
                                         <property name="hidden">0</property>
                                         <property name="id">wxID_ANY</property>
-                                        <property name="label">重新解析所有头文件(&amp;H)</property>
+                                        <property name="label">&amp;Reparse all headers</property>
                                         <property name="max_size"></property>
                                         <property name="maximize_button">0</property>
                                         <property name="maximum_size"></property>
@@ -991,7 +1001,7 @@
                                         <property name="gripper">0</property>
                                         <property name="hidden">0</property>
                                         <property name="id">wxID_ANY</property>
-                                        <property name="label">保存为稳定快照(&amp;B)</property>
+                                        <property name="label">Save as sta&amp;ble</property>
                                         <property name="max_size"></property>
                                         <property name="maximize_button">0</property>
                                         <property name="maximum_size"></property>
@@ -1079,7 +1089,7 @@
                                         <property name="gripper">0</property>
                                         <property name="hidden">0</property>
                                         <property name="id">wxID_ANY</property>
-                                        <property name="label">恢复为稳定快照(&amp;T)</property>
+                                        <property name="label">Res&amp;tore from stable</property>
                                         <property name="max_size"></property>
                                         <property name="maximize_button">0</property>
                                         <property name="maximum_size"></property>
@@ -1134,6 +1144,16 @@
                                         <event name="OnUpdateUI"></event>
                                     </object>
                                 </object>
+                            </object>
+                        </object>
+                        <object class="sizeritem" expanded="1">
+                            <property name="border">5</property>
+                            <property name="flag">wxEXPAND</property>
+                            <property name="proportion">0</property>
+                            <object class="spacer" expanded="1">
+                                <property name="height">0</property>
+                                <property name="permission">none</property>
+                                <property name="width">50</property>
                             </object>
                         </object>
                         <object class="sizeritem" expanded="0">
@@ -1199,7 +1219,7 @@
                                         <property name="style"></property>
                                         <property name="subclass"></property>
                                         <property name="toolbar_pane">0</property>
-                                        <property name="tooltip">调用 CastXML 进行处理</property>
+                                        <property name="tooltip">Invoke CastXML to process the selected header.</property>
                                         <property name="validator_data_type"></property>
                                         <property name="validator_style">wxFILTER_NONE</property>
                                         <property name="validator_type">wxDefaultValidator</property>
@@ -1254,7 +1274,7 @@
                                         <property name="close_button">1</property>
                                         <property name="context_help"></property>
                                         <property name="context_menu">1</property>
-                                        <property name="default">0</property>
+                                        <property name="default">1</property>
                                         <property name="default_pane">0</property>
                                         <property name="dock">Dock</property>
                                         <property name="dock_fixed">0</property>
@@ -1266,7 +1286,7 @@
                                         <property name="gripper">0</property>
                                         <property name="hidden">0</property>
                                         <property name="id">wxID_ANY</property>
-                                        <property name="label">开始处理(&amp;S)</property>
+                                        <property name="label">&amp;Start</property>
                                         <property name="max_size"></property>
                                         <property name="maximize_button">0</property>
                                         <property name="maximum_size"></property>
@@ -1287,7 +1307,7 @@
                                         <property name="style"></property>
                                         <property name="subclass"></property>
                                         <property name="toolbar_pane">0</property>
-                                        <property name="tooltip">开始分析列表中所有新加入但尚未解析过的头文件。&#x0A;若当前快照文件比稳定快照文件要新，那么当前快照会被替换为稳定的版本。</property>
+                                        <property name="tooltip">Parse all the headers that are newly added but not yet parsed.&#x0A;If the current snapshot is newer than the stable one, the current snapshot will restore to the stable one.</property>
                                         <property name="validator_data_type"></property>
                                         <property name="validator_style">wxFILTER_NONE</property>
                                         <property name="validator_type">wxDefaultValidator</property>
@@ -1418,7 +1438,7 @@
                 <event name="OnSize"></event>
                 <event name="OnUpdateUI"></event>
                 <object class="wxMenu" expanded="1">
-                    <property name="label">文件(&amp;F)</property>
+                    <property name="label">&amp;File</property>
                     <property name="name">file_menu</property>
                     <property name="permission">protected</property>
                     <object class="wxMenuItem" expanded="0">
@@ -1428,7 +1448,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">打开(&amp;O)...</property>
+                        <property name="label">&amp;Open...</property>
                         <property name="name">open_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1443,7 +1463,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">保存(&amp;S)</property>
+                        <property name="label">&amp;Save</property>
                         <property name="name">save_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1458,7 +1478,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">另存为(&amp;A)...</property>
+                        <property name="label">Save &amp;as...</property>
                         <property name="name">save_as_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1477,7 +1497,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">保存为稳定状态(&amp;B)</property>
+                        <property name="label">Save as sta&amp;ble</property>
                         <property name="name">save_as_stable_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1492,7 +1512,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">从稳定状态恢复(&amp;R)</property>
+                        <property name="label">Res&amp;tore from stable</property>
                         <property name="name">restore_from_stable_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1511,7 +1531,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">退出(&amp;E)</property>
+                        <property name="label">&amp;Exit</property>
                         <property name="name">exit_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1521,7 +1541,7 @@
                     </object>
                 </object>
                 <object class="wxMenu" expanded="1">
-                    <property name="label">工具(&amp;T)</property>
+                    <property name="label">&amp;Tools</property>
                     <property name="name">tools_menu</property>
                     <property name="permission">protected</property>
                     <object class="wxMenuItem" expanded="0">
@@ -1531,7 +1551,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">统计信息(&amp;S)</property>
+                        <property name="label">&amp;Statistics info</property>
                         <property name="name">stats_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1550,7 +1570,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">重新生成所有&amp;XML文件</property>
+                        <property name="label">Regenerate all &amp;XML files</property>
                         <property name="name">castxml_all_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1565,7 +1585,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">重新解析所有头文件(&amp;R)</property>
+                        <property name="label">&amp;Reparse all header files</property>
                         <property name="name">reparse_all_headers_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1584,7 +1604,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">清理输出目录(&amp;C)</property>
+                        <property name="label">&amp;Clean output directory</property>
                         <property name="name">clean_output_dir_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1599,7 +1619,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">重新生成所有输出文件(&amp;W)</property>
+                        <property name="label">Re&amp;write all output files</property>
                         <property name="name">rewrite_all_output_files_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
@@ -1608,8 +1628,8 @@
                         <event name="OnUpdateUI"></event>
                     </object>
                 </object>
-                <object class="wxMenu" expanded="0">
-                    <property name="label">帮助(&amp;H)</property>
+                <object class="wxMenu" expanded="1">
+                    <property name="label">&amp;Help</property>
                     <property name="name">help_menu</property>
                     <property name="permission">protected</property>
                     <object class="wxMenuItem" expanded="0">
@@ -1619,7 +1639,7 @@
                         <property name="help"></property>
                         <property name="id">wxID_ANY</property>
                         <property name="kind">wxITEM_NORMAL</property>
-                        <property name="label">关于(&amp;A)</property>
+                        <property name="label">&amp;About</property>
                         <property name="name">about_mi</property>
                         <property name="permission">none</property>
                         <property name="shortcut"></property>
