@@ -93,7 +93,7 @@ class StrConv(Converter):
         Converter.__init__(self)
 
     def match(self, cpp_type):
-        return cpp_type.decl() in ("char const *", "const char *",)
+        return cpp_type.decl()  == "char const *"
 
     def specifier(self, cpp_type):
         return "s"
@@ -118,10 +118,10 @@ class StrConv(Converter):
         return var_name + " = PyString_AsString(%s);" % py_var_name
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
-        if raii:
-            return "PyObjectPtr %s(PyString_FromString(%s));" % (py_var_name, var_name)
-        else:
-            return "PyObject *%s = PyString_FromString(%s);" % (py_var_name, var_name)
+        common_part = "PyString_FromString({})"
+        boilerplate = "PyObjectPtr {{}}({});" if raii else "PyObject *{{}} = {};"
+
+        return boilerplate.format(common_part).format(py_var_name, var_name)
 
 
 class WcsConv(Converter):
@@ -129,7 +129,7 @@ class WcsConv(Converter):
         Converter.__init__(self)
 
     def match(self, cpp_type):
-        return cpp_type.decl() in ("wchar_t const *", "const wchar_t *",)
+        return cpp_type.decl()  == "wchar_t const *"
 
     def specifier(self, cpp_type):
         return "u"
@@ -154,17 +154,13 @@ class WcsConv(Converter):
         return "!PyUnicode_Check(%s)" % py_var_name
 
     def extracting_code(self, cpp_type, var_name, py_var_name, error_return, namer):
-        return var_name + " = PyUnicode_AsUnicode(%s);" % py_var_name
+        return var_name + " = (const wchar_t *) PyUnicode_AsUnicode(%s);" % py_var_name
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
-        if raii:
-            return "PyObjectPtr %s(PyUnicode_FromWideChar(%s, wcslen(%s)));" % (
-                py_var_name, var_name, var_name
-            )
-        else:
-            return "PyObject *%s = PyUnicode_FromWideChar(%s, wcslen(%s));" % (
-                py_var_name, var_name, var_name
-            )
+        common_part = "PyUnicode_FromWideChar({1}, wcslen({1}))"
+        boilerplate = "PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
+
+        return boilerplate.format(common_part).format(py_var_name, var_name)
 
 
 # noinspection PyAbstractClass

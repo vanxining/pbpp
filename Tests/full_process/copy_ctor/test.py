@@ -43,16 +43,17 @@ class WstringConv(Converters.Converter):
         return "!PyUnicode_Check(%s)" % py_var_name
 
     def extracting_code(self, cpp_type, var_name, py_var_name, error_return, namer):
-        return cpp_type.declare_var(var_name, "PyUnicode_AsUnicode(%s)" % py_var_name)
+        var = "(const wchar_t *) PyUnicode_AsUnicode(%s)" % py_var_name
+        return cpp_type.declare_var(var_name, var)
 
     def value_building_interim_var(self, arg_name):
         return arg_name + ".c_str()"
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
-        common_part = "PyUnicode_FromWideChar(%s.c_str(), %s.length())"
-        boilerplate = "PyObjectPtr %s({});" if raii else "PyObject *%s = {};"
+        common_part = "PyUnicode_FromWideChar({1}.c_str(), {1}.length())"
+        boilerplate = "PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
 
-        return boilerplate.format(common_part) % (py_var_name, var_name, var_name)
+        return boilerplate.format(common_part).format(py_var_name, var_name)
 
 
 class Test(unittest.TestCase):

@@ -153,7 +153,7 @@ if (py_s != Py_None) {
         PyErr_Format(PyExc_TypeError, "[%s:%d<%s>] Object of type `wchar_t const *` is required.", __FILE__, __LINE__, __FUNCTION__);
         return nullptr;
     }
-    ss = PyUnicode_AsUnicode(py_s);
+    ss = (const wchar_t *) PyUnicode_AsUnicode(py_s);
 }''')
 
 

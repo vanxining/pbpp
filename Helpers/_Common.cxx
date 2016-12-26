@@ -2,6 +2,10 @@
 
 #include <cassert>
 
+#ifndef HAVE_USABLE_WCHAR_T
+static_assert(sizeof(wchar_t) == sizeof(PY_UNICODE_TYPE), "Please report this bug!");
+#endif
+
 namespace pbpp {
 
 // 标准 PyBridget++ PyObject 对象布局
