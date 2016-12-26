@@ -17,6 +17,8 @@ import wx
 class App(wx.PyApp):
     def __init__(self):
         super(App, self).__init__()
+
+        wx.SetProcessDPIAware()
         self._BootstrapApp()
 
     # noinspection PyMethodMayBeStatic,PyBroadException
