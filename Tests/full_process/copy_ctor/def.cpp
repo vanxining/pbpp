@@ -19,7 +19,7 @@ F tmp_f() {
     return F();
 }
 
-#include <cstring>
+#include <cwchar>
 
 unsigned int wstring::length() const {
     return wcslen(str);
