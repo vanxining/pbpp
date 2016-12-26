@@ -415,10 +415,10 @@ class MainWindow(wx.Frame):
 
     def on_castxml_done(self, event):
         if self.process.IsInputAvailable():
-            self.logger.AppendText(self.process.GetInputStream().Read().decode("utf-8"))  # TODO:
+            self.logger.AppendText(self.process.GetInputStream().Read())
 
         if self.process.IsErrorAvailable():
-            self.logger.AppendText(self.process.GetErrorStream().Read().decode("utf-8"))
+            self.logger.AppendText(self.process.GetErrorStream().Read())
 
         self.process = None
 
