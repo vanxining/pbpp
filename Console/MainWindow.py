@@ -113,6 +113,9 @@ class MainWindow(wx.Frame):
         self.hanging_xml = ""
         self.redirector = MyRedirector(self)
 
+        self.DragAcceptFiles(accept=True)
+        wx.PyBind(self, wx.EVT_DROP_FILES, self.on_files_dropped)
+
         self.fill_header_list()
         wx.PyBind(self, wx.EVT_CHECKLISTBOX, self.on_enable_header)
 
@@ -303,6 +306,18 @@ class MainWindow(wx.Frame):
             return self.header_list.GetStringSelection()
         else:
             return None
+
+    def on_files_dropped(self, event):
+        index = self.header_list.GetCount()
+
+        for f in event.GetFiles():
+            self.header_list.Append(f)
+            self.header_list.Check(index)
+            index += 1
+
+        if index > 0:
+            self.header_list.SetSelection(index - 1)
+            self.serialize()
 
     def on_append_header(self, event):
         self.select_and_insert(self.header_list.GetCount())
