@@ -93,7 +93,8 @@ class StrConv(Converter):
         Converter.__init__(self)
 
     def match(self, cpp_type):
-        return cpp_type.decl()  == "char const *"
+        # Template's full name uses the second form
+        return cpp_type.decl() in ("char const *", "const char *")
 
     def specifier(self, cpp_type):
         return "s"
@@ -129,7 +130,8 @@ class WcsConv(Converter):
         Converter.__init__(self)
 
     def match(self, cpp_type):
-        return cpp_type.decl()  == "wchar_t const *"
+        # Template's full name uses the second form
+        return cpp_type.decl() in ("wchar_t const *", "const wchar_t *")
 
     def specifier(self, cpp_type):
         return "u"
