@@ -117,7 +117,8 @@ class MainWindow(wx.Frame):
         wx.PyBind(self, wx.EVT_DROP_FILES, self.on_files_dropped)
 
         self.fill_header_list()
-        wx.PyBind(self, wx.EVT_CHECKLISTBOX, self.on_enable_header)
+        wx.PyBind(self, wx.EVT_LIST_ITEM_CHECKED, self.on_enable_header)
+        wx.PyBind(self, wx.EVT_LIST_ITEM_UNCHECKED, self.on_enable_header)
 
         wx.PyBind(self, EVT_PROGRESS, self.on_progress)
         wx.PyBind(self, EVT_WORKER_FIN, self.on_worker_finished)
@@ -204,44 +205,48 @@ class MainWindow(wx.Frame):
         return ProjectBase.make_temp_cpp_header(path)
 
     def fill_header_list(self):
-        items = []
-        disabled = set()
+        self.header_list.EnableCheckboxes()
 
+        w = self.header_list.GetSize().GetX()
+        w -= wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X, self)
+        self.header_list.InsertColumn(0, u"Headers", width=w)
+
+        index = 0
         for header in open(self.proj_dir + "/Headers.lst"):
             header = header.strip()
             if header:
+                disabled = False
                 if header.startswith("// "):
                     header = header[3:]
-                    disabled.add(len(items))
+                    disabled = True
 
-                items.append(header.decode())
+                self.header_list.InsertItem(index, header.decode("utf-8"))
+                if not disabled:
+                    self.header_list.CheckItem(index, True)
 
-        self.header_list.InsertItems(items, 0)
-
-        for i in range(len(items)):
-            if i not in disabled:
-                self.header_list.Check(i, True)
+                index += 1
 
     def serialize(self):
         with open(self.proj_dir + "/Headers.lst", "w") as outf:
-            for i, header in enumerate(self.header_list.GetStrings()):
-                header = header.encode("utf-8")
-                if not self.header_list.IsChecked(i):
+            for index in range(self.header_list.GetItemCount()):
+                header = self.header_list.GetItemText(index).encode("utf-8")
+                if not self.header_list.IsItemChecked(index):
                     header = "// " + header
 
                 outf.write(header + "\n")
 
     def count_enabled(self):
         cnt = 0
-        for _ in self.enabled():
-            cnt += 1
+        for index in range(self.header_list.GetItemCount()):
+            if self.header_list.IsItemChecked(index):
+                cnt += 1
 
         return cnt
 
     def enabled(self):
-        for i, header in enumerate(self.header_list.GetStrings()):
-            if self.header_list.IsChecked(i):
-                header = header.encode("utf-8")
+        for index in range(self.header_list.GetItemCount()):
+            if self.header_list.IsItemChecked(index):
+                header = self.header_list.GetItemText(index).encode("utf-8")
                 yield header
 
     def on_timer(self, event):
@@ -301,41 +306,60 @@ class MainWindow(wx.Frame):
 
         return fdlg.GetPath()
 
+    def set_selected_header(self, index, selected=True):
+        state = wx.LIST_STATE_SELECTED if selected else 0
+        self.header_list.SetItemState(index, state, wx.LIST_STATE_SELECTED)
+
+    def get_selected_header_index(self):
+        if self.header_list.GetSelectedItemCount() > 0:
+            item = self.header_list.GetNextItem(-1, state=wx.LIST_STATE_SELECTED)
+            return item
+        else:
+            return -1
+
     def get_selected_header(self):
-        if self.header_list.GetSelection() != wx.NOT_FOUND:
-            return self.header_list.GetStringSelection()
+        seleted = self.get_selected_header_index()
+        if seleted != -1:
+            return self.header_list.GetItemText(seleted)
         else:
             return None
 
+    def is_header_list_empty(self):
+        return self.header_list.GetItemCount() == 0
+
     def on_files_dropped(self, event):
-        index = self.header_list.GetCount()
+        index = self.header_list.GetItemCount()
 
         for f in event.GetFiles():
-            self.header_list.Append(f)
-            self.header_list.Check(index)
+            self.header_list.InsertItem(index, f)
+            self.header_list.CheckItem(index, True)
             index += 1
 
         if index > 0:
-            self.header_list.SetSelection(index - 1)
+            self.set_selected_header(index - 1)
+            self.header_list.EnsureVisible(index - 1)
+
             self.serialize()
 
     def on_append_header(self, event):
-        self.select_and_insert(self.header_list.GetCount())
+        self.select_and_insert(self.header_list.GetItemCount())
 
     def select_and_insert(self, pos):
         path = self.select_file()
         if path:
-            self.header_list.Insert(path, pos)
-            self.header_list.SetSelection(pos)
-            self.header_list.Check(pos)
+            self.header_list.InsertItem(pos, path)
+            self.header_list.CheckItem(pos, True)
+
+            self.set_selected_header(pos)
+            self.header_list.EnsureVisible(pos)
 
             self.serialize()
 
     def on_remove_header(self, event):
-        selected = self.header_list.GetSelection()
-        if selected != wx.NOT_FOUND:
+        selected = self.get_selected_header_index()
+        if selected != -1:
             if self.ask():
-                self.header_list.Delete(selected)
+                self.header_list.DeleteItem(selected)
                 self.header_list.SetFocus()
 
                 self.serialize()
@@ -347,11 +371,11 @@ class MainWindow(wx.Frame):
         self.do_enable_all_headers(False)
 
     def do_enable_all_headers(self, enabled):
-        if self.header_list.IsEmpty():
+        if self.is_header_list_empty():
             return
 
-        for i in range(self.header_list.GetCount()):
-            self.header_list.Check(i, enabled)
+        for i in range(self.header_list.GetItemCount()):
+            self.header_list.CheckItem(i, enabled)
 
         self.serialize()
 
@@ -530,7 +554,7 @@ class MainWindow(wx.Frame):
         self.serialize()
 
     def on_reparse_header(self, event):
-        if self.header_list.GetSelection() == wx.NOT_FOUND:
+        if self.get_selected_header_index() == -1:
             self.logger.SetValue(u"Please select one header first.\n\n")
             return
 
@@ -618,7 +642,7 @@ class MainWindow(wx.Frame):
         self.current.save(self.current_proj())
 
     def on_start(self, event):
-        assert self.header_list.GetCount() > 0
+        assert not self.is_header_list_empty()
 
         self.enable_console(False)
         self.logger.Clear()

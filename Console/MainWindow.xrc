@@ -28,10 +28,12 @@
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
-								<option>4</option>
+								<option>1</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
-								<object class="wxCheckListBox" name="header_list" />
+								<object class="wxListCtrl" name="header_list">
+									<style>wxLC_NO_HEADER|wxLC_NO_SORT_HEADER|wxLC_REPORT|wxLC_SINGLE_SEL</style>
+								</object>
 							</object>
 							<object class="sizeritem">
 								<option>0</option>
@@ -144,7 +146,7 @@
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>0</option>
-								<flag>wxALL</flag>
+								<flag>wxBOTTOM|wxRIGHT|wxTOP</flag>
 								<border>5</border>
 								<object class="wxButton" name="reparse_all_headers">
 									<label>_Reparse all headers</label>
@@ -195,7 +197,7 @@
 							</object>
 							<object class="sizeritem">
 								<option>0</option>
-								<flag>wxALL</flag>
+								<flag>wxBOTTOM|wxLEFT|wxTOP</flag>
 								<border>5</border>
 								<object class="wxButton" name="start">
 									<tooltip>Parse all the headers that are newly added but not yet parsed.\nIf the current snapshot is newer than the stable one, the current snapshot will restore to the stable one.</tooltip>
