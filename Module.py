@@ -21,7 +21,7 @@ class PythonNamer(object):
         pass
 
     def package(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def fmt_path(self, cxxpath):
         namespaces = Util.split_namespaces(cxxpath)
@@ -32,8 +32,7 @@ class PythonNamer(object):
 
         return '.'.join(pythonic)
 
-    @staticmethod
-    def normalize_template(name):
+    def normalize_template(self, name):
         repl = (('const', '_const_'),
                 ('<', '_'), ('>', '_'), ('::', '_'),
                 (' ', ''),  (',', '_'), ('__', '_'),
@@ -46,19 +45,17 @@ class PythonNamer(object):
 
     def _to_python(self, name):
         if '<' in name:
-            name = PythonNamer.normalize_template(name)
+            name = self.normalize_template(name)
 
         return name
 
     def to_python(self, name):
         return self.fmt_path(name).replace('.', '_')
 
-    @staticmethod
-    def constructor(cls):
+    def constructor(self, cls):
         return "__init__"
 
-    @staticmethod
-    def destructor(cls):
+    def destructor(self, cls):
         return "__del__"
 
     def adaptively_rename(self, cls, addin, prefix):
@@ -90,19 +87,17 @@ class PythonNamer(object):
     def method_holder(self, cls):
         return self.adaptively_rename(cls, "MethodHolder", prefix=False)
 
-    @staticmethod
-    def free_function(name):
+    def free_function(self, name):
         return "__" + name
 
-    @staticmethod
-    def getter(field_name):
+    def getter(self, field_name):
         return "__get_" + field_name
 
-    @staticmethod
-    def setter(field_name):
+    def setter(self, field_name):
         return "__set_" + field_name
 
 
+# noinspection PyUnusedLocal,PyMethodMayBeStatic
 class FlagsAssigner(object):
     def __init__(self):
         pass
@@ -111,6 +106,7 @@ class FlagsAssigner(object):
         return "pbpp::LifeTime::PYTHON"
 
 
+# noinspection PyUnusedLocal,PyMethodMayBeStatic
 class HeaderProvider(object):
     def __init__(self):
         pass
@@ -118,16 +114,13 @@ class HeaderProvider(object):
     def klass(self, cls):
         return []
 
-    @staticmethod
-    def module(name):
+    def module(self, name):
         raise NotImplementedError()
 
-    @staticmethod
-    def normalize(full_path):
+    def normalize(self, full_path):
         raise NotImplementedError()
 
-    @staticmethod
-    def pch():
+    def pch(self):
         return ""
 
 

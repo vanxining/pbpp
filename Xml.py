@@ -16,7 +16,7 @@ class Compressor(object):
             pass
 
         def base(self, full_name):
-            raise NotImplementedError
+            raise NotImplementedError()
 
     def __init__(self):
         self.tree = None
