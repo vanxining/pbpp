@@ -88,6 +88,10 @@ def _import(package_name):
 
 
 def _clean():
+    obj_file = tmp_dir + "obj" + os.path.sep + "def.o"
+    if os.path.exists(obj_file):
+        os.remove(obj_file)
+
     for f in os.listdir(tmp_dir):
         if f.endswith(".py.cxx") or f.endswith(".cpp"):
             os.remove(tmp_dir + f)
