@@ -2,6 +2,7 @@ import copy
 
 import Access
 import Argument
+import Class
 import Code.Snippets
 import CodeBlock
 import Session
@@ -12,7 +13,7 @@ import Types
 class _InjectedMethod_TupleAndKeywords(TupleAndKeywords.TupleAndKeywords):
     def get_parameters_string(self):
         s = TupleAndKeywords.TupleAndKeywords.get_parameters_string(self)
-        return "cxx_obj, " + s if s else "cxx_obj"
+        return "py_cxx_obj, " + s if s else "py_cxx_obj"
 
 
 class Method(object):
@@ -170,11 +171,15 @@ class MethodJar(object):
             self.methods[mname] = list(set(overloads) - to_strip)
 
     @staticmethod
-    def _normalize_method_name(mname, namer):
-        return namer.normalize_template(mname) if '<' in mname else mname
+    def _normalize_method_name(mname, namer, cls):
+        normalized = namer.normalize_template(mname) if '<' in mname else mname
+        if not cls:
+            normalized = namer.free_function(normalized)
 
-    def generate_methods(self, block, namer, cls):
-        assert isinstance(block, CodeBlock.CodeBlock)
+        return normalized
+
+    def generate_methods(self, block, namer, scope_obj):
+        cls = scope_obj if isinstance(scope_obj, Class.Class) else None
 
         for mname in sorted(self.methods.keys()):
             overloads = sorted(self.methods[mname], lambda x, y: cmp(x.raw_sig, y.raw_sig))
@@ -200,7 +205,7 @@ class MethodJar(object):
                     signatures.append(m.args)
 
                 if is_real_class_member:
-                    invoker = "cxx_obj->"
+                    invoker = "py_cxx_obj->"
                     if m.static:
                         invoker = cls.get_wrapt_class_name() + "::"
                 else:
@@ -214,7 +219,7 @@ class MethodJar(object):
 
                     action = "PBPP_BEGIN_ALLOW_THREADS\n"
                     action += fmt % (
-                        m.returns.join_type_and_name("retval"),
+                        m.returns.join_type_and_name("py_cxx_retval"),
                         invoker,
                         m.name,  # ATTENTION!
                         "PBPP_END_ALLOW_THREADS"
@@ -224,9 +229,14 @@ class MethodJar(object):
                         action += Code.Snippets.ensure_not_null + '\n'
 
                     if m.returns.is_pyobject_ptr():
-                        action += "return retval;"
+                        action += "return py_cxx_retval;"
                     else:
-                        idecl = m.returns.get_build_value_idecl("retval", namer=namer)
+                        idecl = m.returns.get_build_value_idecl(
+                            var_name="py_cxx_retval",
+                            py_var_name="py_retval",
+                            namer=namer
+                        )
+
                         action += idecl + "\nreturn (PyObject *) py_retval;"
                 else:
                     action = Code.Snippets.invoke_fx_returning_void % (invoker, m.name)
@@ -247,7 +257,7 @@ class MethodJar(object):
 
             block.write_code(method_sig % {
                 "PYOBJ_NAME": "" if not cls else namer.pyobj(cls.full_name),
-                "NAME": self._normalize_method_name(mname, namer),
+                "NAME": self._normalize_method_name(mname, namer, cls),
             })
 
 
@@ -284,11 +294,19 @@ class MethodJar(object):
                                      finish_directly=True,
                                      pyside_debug_name=pyside)
 
-        if not cls:
-            self.generate_method_table(block, namer, cls)
+    def generate_methods_table(self, block, namer, scope_obj):
+        cls = scope_obj if isinstance(scope_obj, Class.Class) else None
 
-    def generate_method_table(self, block, namer, cls):
-        block.write_code(Code.Snippets.method_table_begin)
+        if cls:
+            method_holder = namer.method_holder(cls.full_name)
+            table_begin = Code.Snippets.methods_table_begin % (
+                method_holder, namer.methods_table(cls.full_name)
+            )
+        else:
+            method_holder = None
+            table_begin = Code.Snippets.ff_table_begin
+
+        block.write_code(table_begin)
         block.indent()
 
         for mname in sorted(self.methods.keys()):
@@ -304,15 +322,18 @@ class MethodJar(object):
             if not m0.free_function and m0.static:
                 flags += " | METH_STATIC"
 
-            normalized_name = self._normalize_method_name(mname, namer)
+            normalized_name = self._normalize_method_name(mname, namer, cls)
+            if cls:
+                normalized_name = method_holder + "::" + normalized_name
+
             block.write_code('{ (char *) "%s", (PyCFunction) %s, %s, nullptr },' % (
                 namer.to_python(mname),
-                "__M::" + normalized_name if cls else "__" + normalized_name,
+                normalized_name,
                 flags,
             ))
 
         block.unindent()
-        block.write_code(Code.Snippets.method_table_end)
+        block.write_code(Code.Snippets.methods_table_end)
 
 
 def _write_overloads(block, namer, func_name, signatures, err_return, actions,
@@ -321,7 +342,7 @@ def _write_overloads(block, namer, func_name, signatures, err_return, actions,
     assert len(signatures) == len(actions)
 
     func_name = func_name.upper()
-    label_ok = "__%s_OK" % func_name
+    label_ok = "PBPP__%s_OK" % func_name
 
     block.write_code(Code.Snippets.overloading_exception_cache % len(signatures))
 
@@ -341,7 +362,7 @@ def _write_overloads(block, namer, func_name, signatures, err_return, actions,
             err_handler = (Code.Snippets.overloading_restore_exceptions %
                            len(signatures)) + err_return
 
-        with CodeBlock.BracketThis(block, "___OVERLOAD___() "):
+        with CodeBlock.BracketThis(block, preamble=""):
             r = Code.Snippets.overloading_cache_exception + err_handler
             sig.write_args_parsing_code(block, namer, True, r, pyside_debug_name)
 

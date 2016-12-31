@@ -92,12 +92,12 @@ class Scope(object):
 
 class BracketThis(object):
     def __init__(self, block, preamble=None, postscript=None):
-        self.preamble = preamble or ""
-        self.postscript = postscript or ""
+        self.preamble = preamble
+        self.postscript = postscript
         self.block = block
 
     def __enter__(self):
-        if self.preamble or len(self.block.lines) == 0:
+        if self.preamble is not None or len(self.block.lines) == 0:
             self.block.write_code(self.preamble + "{")
         else:
             self.block.lines[-1] += " {"
@@ -112,5 +112,5 @@ class BracketThis(object):
         else:
             self.block.write_code('}')
 
-        self.block.lines[-1] += self.postscript
+        self.block.lines[-1] += self.postscript or ""
         self.block.append_blank_line()

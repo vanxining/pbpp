@@ -23,8 +23,17 @@ class PythonNamer(object):
     def package(self):
         raise NotImplementedError()
 
-    def fmt_path(self, cxxpath):
-        namespaces = Util.split_namespaces(cxxpath)
+    def mod_register(self, mod):
+        return mod.replace('.', '_')
+
+    def mod_ptr_name(self, mod):
+        return "__py_mod_" + self.mod_register(mod).lower()
+
+    def globals_register(self, mod):
+        return "__Globals"
+
+    def cxx_path_to_pythonic(self, cxx_path):
+        namespaces = Util.split_namespaces(cxx_path)
         pythonic = []
         for ns in namespaces:
             if ns:
@@ -50,13 +59,7 @@ class PythonNamer(object):
         return name
 
     def to_python(self, name):
-        return self.fmt_path(name).replace('.', '_')
-
-    def constructor(self, cls):
-        return "__init__"
-
-    def destructor(self, cls):
-        return "__del__"
+        return self.cxx_path_to_pythonic(name).replace('.', '_')
 
     def adaptively_rename(self, cls, addin, prefix):
         name = self.to_python(cls)
@@ -65,15 +68,23 @@ class PythonNamer(object):
 
         return addin + "__" + name if prefix else name + "__" + addin
 
+    def constructor(self, cls):
+        return "__init__"
+
+    def destructor(self, cls):
+        return "__del__"
+
     def pyobj(self, cls):
         return self.adaptively_rename(cls, "Pseudo", prefix=True)
 
     def pytype(self, cls):
         return self.adaptively_rename(cls, "Type", prefix=False)
 
-    def register(self, cls):
-        name = self.to_python(cls)
-        return "__" + name
+    def class_register(self, cls):
+        return "__" + self.to_python(cls)
+
+    def base_ptr_fixer(self, cls):
+        return "FixBasePtr"
 
     def borrower(self, cls):
         return self.adaptively_rename(cls, "Borrow", prefix=True)
@@ -87,14 +98,26 @@ class PythonNamer(object):
     def method_holder(self, cls):
         return self.adaptively_rename(cls, "MethodHolder", prefix=False)
 
-    def free_function(self, name):
-        return "__" + name
+    def methods_table(self, cls):
+        return "__methods"
+
+    def getset_table(self, cls):
+        return "__getset"
 
     def getter(self, field_name):
         return "__get_" + field_name
 
     def setter(self, field_name):
         return "__set_" + field_name
+
+    def bases_register(self, cls):
+        return "__Bases"
+
+    def enums_register(self, scope):
+        return "__Enums"
+
+    def free_function(self, name):
+        return "__" + name
 
 
 # noinspection PyUnusedLocal,PyMethodMayBeStatic
@@ -366,8 +389,8 @@ class Module(object):
 
         return full_name
 
-    def get_creator_name(self):
-        return self._pyside_full_name().replace('.', '_')
+    def get_register_name(self):
+        return self.namer.mod_register(self._pyside_full_name())
 
     def _generate_global_constants_wrapper(self, block):
         forward_decl = set()
@@ -388,22 +411,25 @@ class Module(object):
                     '*' if const.type.is_ptr() else "",
                     const.name
                 ))
-            else:
-                # TODO: Review
-
+            else:  # TODO: Review
                 bld = const.type.get_build_value_idecl(const.name, namer=self.namer)
                 one_line = '\n' not in bld
 
                 if one_line:
                     arg = bld[(16 + len(const.name)):-1]
                 else:
-                    py_var_name = "__var_%d" % usable_id
+                    py_var_name = "py_var_%d" % usable_id
                     usable_id += 1
 
-                    bld = const.type.get_build_value_idecl(const.name, py_var_name, namer=self.namer)
+                    bld = const.type.get_build_value_idecl(
+                        const.name, py_var_name, namer=self.namer
+                    )
 
                     memblock.append_blank_line()
+                    memblock.write_code("{")
+                    memblock.indent()
                     memblock.write_code(bld)
+
                     arg = py_var_name
 
                 memblock.write_code('PyModule_AddObject(m, "%s", %s);' % (
@@ -411,18 +437,24 @@ class Module(object):
                 ))
 
                 if not one_line:
+                    memblock.unindent()
+                    memblock.write_code('}')
                     memblock.append_blank_line()
 
         if len(forward_decl) > 0:
             block.write_lines(forward_decl)
             block.append_blank_line()
 
-        block.write_code(Code.Snippets.register_global_constants_sig)
+        register = self.namer.globals_register(self._pyside_full_name())
+        block.write_code(Code.Snippets.global_constants_register_sig % register)
+
         with CodeBlock.BracketThis(block):
             block.write_code(memblock.flush())
 
     def _generate_enums_register(self, block):
-        block.write_code(Code.Snippets.module_register_enums_sig)
+        block.write_code(Code.Snippets.module_enums_register_sig %
+                         self.namer.enums_register(self._pyside_full_name()))
+
         with CodeBlock.BracketThis(block):
             self.enums.generate(block, Code.Snippets.register_module_enum_values)
 
@@ -449,6 +481,7 @@ class Module(object):
 
         if down:
             for submodule in self.submodules:
+                # noinspection PyProtectedMember
                 submodule._create_dummy_wrappers()
 
     def finish_processing(self):
@@ -484,8 +517,9 @@ class Module(object):
         for submodule in self.submodules.values():
             submodule.generate(outdir, ext)
 
+        full_name = self._pyside_full_name()
         output_path = "%s%s%s.py%s" % (
-            outdir, os.path.sep, self._pyside_full_name(), ext
+            outdir, os.path.sep, full_name, ext
         )
 
         if self.is_root():
@@ -507,46 +541,48 @@ class Module(object):
             fp_mem_block.append_blank_line()
 
         ff_mem_block = CodeBlock.CodeBlock()
-        self.free_functions.generate_methods(ff_mem_block, self.namer, cls=None)
+        ff_table_mem_block = CodeBlock.CodeBlock()
+        self.free_functions.generate_methods(ff_mem_block, self.namer, self)
+        self.free_functions.generate_methods_table(ff_table_mem_block, self.namer, self)
 
         template_args = {
             "MNAME": self.name,
-            "MNAME_FULL": self._pyside_full_name(),
-            "FUNC_NAME": self.get_creator_name(),
+            "MNAME_FULL": full_name,
+            "MOD_REGISTER": self.get_register_name(),
             "HEADERS": self.header_jar.concat_sorted(),
             "FPTRS": fp_mem_block.flush(),
             "FREE_FUNCTIONS": ff_mem_block.flush(),
+            "METHODS_TABLE": ff_table_mem_block.flush(),
         }
 
         block = CodeBlock.CodeBlock()
         block.write_code(self.header_provider.pch())
 
-        with open(os.path.dirname(__file__) + "/Code/Header.inl", "r") as f:
+        with open(os.path.dirname(__file__) + "/Code/Header.inl") as f:
             block.write_code(f.read() % template_args)
 
         self._generate_global_constants_wrapper(block)
         self._generate_enums_register(block)
 
-        module_ptr = "__mod_" + self.get_creator_name().lower()
+        module_ptr = self.namer.mod_ptr_name(full_name)
 
         block.write_code(Code.Snippets.define_module_ptr.format(module_ptr))
-        block.write_code(Code.Snippets.module_creator_header % template_args)
+        block.write_code(Code.Snippets.module_register_header % template_args)
         block.indent()
 
-        block.write_code("__Globals(m);")
-        block.write_code("__Enums(m);")
+        block.write_code(self.namer.globals_register(full_name) + "(m);")
+        block.write_code(self.namer.enums_register(full_name) + "(m);")
         block.append_blank_line()
 
         for submodule in self.submodules.values():
-            creator = submodule.get_creator_name()
-            block.write_code("PyObject *%s(PyObject *parent);" % creator)
+            register = submodule.get_register_name()
+            block.write_code("PyObject *%s(PyObject *parent);" % register)
 
         if len(self.submodules) > 0:
             block.append_blank_line()
 
         for submodule in self.submodules.values():
-            creator = submodule.get_creator_name()
-            block.write_code("%s(m);" % creator)
+            block.write_code(submodule.get_register_name() + "(m);")
 
         if len(self.submodules) > 0:
             block.append_blank_line()
@@ -563,7 +599,8 @@ class Module(object):
         block.write_code("}")
 
         if self.is_root():
-            block.write_lines(("", "", "EXPORT_MOD(%s)" % self.name, ""))
+            with open(os.path.dirname(__file__) + "/Code/RootMod.inl") as f:
+                block.write_code(f.read() % self.name)
 
 
         ns = self._get_cxx_namespace() or self.name
@@ -595,7 +632,7 @@ class Module(object):
             if cls.mod != 'm':
                 modules.add("extern PyObject *%s;" % cls.mod)
 
-            register = self.namer.register(cls.full_name)
+            register = self.namer.class_register(cls.full_name)
             declarations.append("void %s(PyObject *m);" % register)
             invoke.append("%s(%s);" % (register, cls.mod))
 

@@ -68,15 +68,15 @@ class TupleAndKeywords(object):
 
         if enable_kw:
             idecl = Code.Snippets.PyArg_ParseTupleAndKeywords % {
-                "TUPLE": "args",
-                "KW_TUPLE": "kwargs",
-                "KW_ARRAY": "keywords",
+                "TUPLE": "py_args",
+                "KW_TUPLE": "py_kwargs",
+                "KW_ARRAY": "py_keywords",
                 "FORMAT": '"%s"' % fmt,
                 "ARGS": ptrs,
             }
         else:
             idecl = Code.Snippets.PyArg_ParseTuple % {
-                "TUPLE": "args",
+                "TUPLE": "py_args",
                 "FORMAT": '"%s"' % fmt,
                 "ARGS": ptrs,
             }
@@ -94,7 +94,7 @@ class TupleAndKeywords(object):
                 pytype = namer.pytype(arg.type.intrinsic_type())
                 decl = arg.type.cvt.args_parsing_interim_vars(arg.type, arg.name, pytype)
             elif arg.type.is_built_in():
-                decl = '&' + arg.name if not arg.type.is_bool() else "&py_" + arg.name
+                decl = '&' + arg.name if not arg.type.is_bool() else "&py__" + arg.name
             elif arg.type.decl_no_const() == "PyObject *":
                 decl = '&' + arg.name
             else:
@@ -104,14 +104,14 @@ class TupleAndKeywords(object):
                     else:
                         result.append('&' + namer.pytype(arg.type.intrinsic_type()))
 
-                decl = "&py_" + arg.name
+                decl = "&py__" + arg.name
 
             result.append(decl)
 
         return result
 
     def write_args_parsing_code(self, block, namer, enable_kw, err_return, pyside_debug_name):
-        error_handler_label = "__ARGS_PARSING_ERROR_HANDLER_" + str(block.size())
+        error_handler_label = "PBPP__ARGS_PARSING_ERROR_HANDLER_" + str(block.size())
         require_error_handler_label = False
 
         to_cxx = []
@@ -135,10 +135,10 @@ class TupleAndKeywords(object):
                 Session.header_jar().add_headers(arg.type.cvt.additional_headers(arg.type))
             elif arg.type.is_built_in():
                 if arg.type.is_bool():
-                    block.write_code("PyObject *py_%s = nullptr;" % arg.name)
+                    block.write_code("PyObject *py__%s = nullptr;" % arg.name)
 
                     if arg.defv is None:
-                        extracting_code = Types.extract_as_bool("py_%s" % arg.name)
+                        extracting_code = Types.extract_as_bool("py__%s" % arg.name)
                         to_cxx.append(arg.type.declare_var(arg.name, extracting_code))
                     else:
                         to_cxx.append(arg.type.declare_var(arg.name, arg.defv))
@@ -155,7 +155,7 @@ class TupleAndKeywords(object):
                     pytype = namer.pytype(arg.type.intrinsic_type())
                     block.write_code("extern PyTypeObject %s;" % pytype)
 
-                block.write_code("PyObject *py_%s = nullptr;" % arg.name)
+                block.write_code("PyObject *py__%s = nullptr;" % arg.name)
                 cpp_ptr_type = arg.type.ref_to_ptr()
 
                 if arg.type.is_trivial():
@@ -170,19 +170,19 @@ class TupleAndKeywords(object):
                     if arg.defv is None:
                         to_cxx += capsule_ensure_reference
 
-                        init_expr = '*((%s) PyCapsule_GetPointer(py_%s, "%s"))' % (
+                        init_expr = '*((%s) PyCapsule_GetPointer(py__%s, "%s"))' % (
                             (cpp_ptr_type.decl(), arg.name, arg.type.decl_no_const(),)
                         )
 
                         to_cxx.append(arg.type.declare_var(arg.name, init_expr))
                     else:
-                        var_ptr = arg.name + "_ptr"  # TODO: more robust way
+                        var_ptr = "py_cxx_%s_ptr" % arg.name
                         to_cxx.append(cpp_ptr_type.declare_var(var_ptr, "&(%s)" % arg.defv))
 
-                        to_cxx.append("if (py_%s) {" % arg.name)
+                        to_cxx.append("if (py__%s) {" % arg.name)
                         to_cxx.append(">>>")
                         to_cxx += capsule_ensure_reference
-                        to_cxx.append(var_ptr + ' = (%s) PyCapsule_GetPointer(py_%s, "%s")' % (
+                        to_cxx.append(var_ptr + ' = (%s) PyCapsule_GetPointer(py__%s, "%s")' % (
                             cpp_ptr_type, arg.name, arg.type.decl_no_const(),
                         ))
                         to_cxx.append("<<<")
@@ -193,23 +193,22 @@ class TupleAndKeywords(object):
                     if arg.defv is None:
                         init_expr = '*' + Code.Snippets.external_type_real_ptr % {
                             "CLASS": arg.type.intrinsic_type(),
-                            "PYOBJ_PTR": "py_" + arg.name
+                            "PYOBJ_PTR": "py__" + arg.name
                         }
 
                         to_cxx.append(arg.type.declare_var(arg.name, init_expr))
                     else:
-                        # TODO: potential name conflit
-                        defv_rv = arg.name + "_defv_rv"
-                        var_ptr = arg.name + "_ref2ptr"
+                        defv_rv = "py_cxx_%s_defv_rv" % arg.name
+                        var_ptr = "py_cxx_%s_ref2ptr" % arg.name
 
-                        to_cxx.append("auto &&%s_defv_rv = %s;" % (arg.name, arg.defv))
+                        to_cxx.append("auto &&%s = %s;" % (defv_rv, arg.defv))
                         to_cxx.append(cpp_ptr_type.declare_var(var_ptr, '&' + defv_rv))
 
-                        to_cxx.append("if (py_%s) {" % arg.name)
+                        to_cxx.append("if (py__%s) {" % arg.name)
                         to_cxx.append(">>>")
                         to_cxx.append(var_ptr + ' = ' + Code.Snippets.external_type_real_ptr % {
                                 "CLASS": arg.type.intrinsic_type(),
-                                "PYOBJ_PTR": "py_" + arg.name
+                                "PYOBJ_PTR": "py__" + arg.name
                             } + ';')
                         to_cxx.append("<<<")
                         to_cxx.append("}")
@@ -225,8 +224,8 @@ class TupleAndKeywords(object):
                 if arg.type.is_trivial():  # trivial pointer
                     pytype = "PyCapsule_Type"
 
-                    block.write_code("PyObject *py_%s = nullptr;" % arg.name)
-                    extracting_code = '(%s) PyCapsule_GetPointer(py_%s, "%s")' % (
+                    block.write_code("PyObject *py__%s = nullptr;" % arg.name)
+                    extracting_code = '(%s) PyCapsule_GetPointer(py__%s, "%s")' % (
                         (arg.type.decl(), arg.name, arg.type.decl_no_const(),)
                     )
 
@@ -235,11 +234,11 @@ class TupleAndKeywords(object):
                     pytype = namer.pytype(arg.type.intrinsic_type())
 
                     block.write_code("extern PyTypeObject %s;" % pytype)
-                    block.write_code("PyObject *py_%s = nullptr;" % arg.name)
+                    block.write_code("PyObject *py__%s = nullptr;" % arg.name)
 
                     extracting_code = Code.Snippets.external_type_real_ptr % {
                         "CLASS": arg.type.intrinsic_type(),
-                        "PYOBJ_PTR": "py_" + arg.name
+                        "PYOBJ_PTR": "py__" + arg.name
                     }
 
                     if not arg.type.is_ptr():  # args pass by value
@@ -259,11 +258,11 @@ class TupleAndKeywords(object):
                     memblock = CodeBlock.CodeBlock()
 
                     if arg.defv is not None:
-                        memblock.write_code("if (py_%s) {" % arg.name)
+                        memblock.write_code("if (py__%s) {" % arg.name)
                         memblock.indent()
 
                     if arg.type.is_ptr():
-                        memblock.write_code("if (py_%s != Py_None) {" % arg.name)
+                        memblock.write_code("if (py__%s != Py_None) {" % arg.name)
                         memblock.indent()
 
                         memblock.write_code(Code.Snippets.extract_pointer % {
@@ -295,7 +294,7 @@ class TupleAndKeywords(object):
             if not self.empty():
                 kws = ", ".join(['"%s"' % kw for kw in self.get_keywords()] + ["nullptr"])
 
-            block.write_code("const char *keywords[] = { %s };" % kws)
+            block.write_code("const char *py_keywords[] = { %s };" % kws)
             block.append_blank_line()
 
         parser_idecl = self.build_parser_idecl(namer=namer, enable_kw=enable_kw,

@@ -52,7 +52,7 @@ for (i = 0; i < NCCS; i++) {
 PyModule_AddStringMacro
 PyModule_AddIntMacro
 直接用标准 PBPP_PyObject？
-不要生成默认的 FixBasePtr() ==> CastToBase()
+?不要生成默认的 FixBasePtr() ==> CastToBase()
 Weak Reference Support
 其他一些需要使用 PBPP_BEGIN_ALLOW_THREADS 的地方：
     √构造函数、析构函数

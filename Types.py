@@ -235,7 +235,7 @@ class Type(object):
                 builder = _built_in[self.decl_no_const()]["builder"]
 
             if raii:
-                return "PyObjectPtr %s(%s(%s));" % (py_var_name, builder, var_name)
+                return "pbpp::PyObjectPtr %s(%s(%s));" % (py_var_name, builder, var_name)
             else:
                 return "PyObject *%s = %s(%s);" % (py_var_name, builder, var_name)
         elif self.is_ptr_or_ref():
@@ -260,6 +260,7 @@ class Type(object):
             else:
                 assert namer is not None
 
+                py_raw_ptr = py_var_name[:2] + "_raw" + py_var_name[2:]
                 boilerplate = Code.Snippets.borrow_from_ptr
                 if self.is_ref():
                     if raii:
@@ -270,6 +271,7 @@ class Type(object):
                 ret = boilerplate % {
                     "VAR": var_name,
                     "PY_VAR_NAME": py_var_name,
+                    "PY_RAW_PTR": py_raw_ptr,
                     "PTR": ptr, "REF": ref,
                     "CLASS": self.intrinsic_type(),
                     "BORROWER": namer.borrower(self.intrinsic_type()),
@@ -277,9 +279,9 @@ class Type(object):
 
                 if self.is_ptr():
                     if raii:
-                        ret += "\nPyObjectPtr %s(%s_raw);" %(py_var_name, py_var_name)
+                        ret += "\npbpp::PyObjectPtr %s(%s);" %(py_var_name, py_raw_ptr)
                     else:
-                        ret += "\nPyObject *%s = %s_raw;" %(py_var_name, py_var_name)
+                        ret += "\nPyObject *%s = %s;" %(py_var_name, py_raw_ptr)
 
                 return ret
         else:

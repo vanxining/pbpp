@@ -204,6 +204,7 @@ class Class(object):
             "WRAPT": self.get_wrapt_class_name(),
             "PYTYPE_NAME": self.namer.pytype(self.full_name),
             "PYOBJ_NAME": self.namer.pyobj(self.full_name),
+            "BASE_PTR_FIXER": self.namer.base_ptr_fixer(self.full_name),
         })
 
         if not self.fptrs.empty():
@@ -221,7 +222,6 @@ class Class(object):
 
         # Use a dummy subclass as method holder to invoke protected members
         method_holder = self.namer.method_holder(self.full_name)
-        self.block.write_code("#define __M " + method_holder)
 
         if self.allows_subclassing() or self.enum_class:
             if not self.enum_class:
@@ -229,9 +229,11 @@ class Class(object):
             else:
                 method_wrapper_base = self.nester or "pbpp::ScopedEnumDummy"
 
-            self.block.write_code("struct __M : public %s {" % method_wrapper_base)
+            self.block.write_code("struct %s : public %s {" % (
+                method_holder, method_wrapper_base
+            ))
         else:
-            self.block.write_code("struct __M {")
+            self.block.write_code("struct %s {" % method_holder)
 
         self.block.append_blank_line()
 
@@ -241,14 +243,18 @@ class Class(object):
         self._generate_enums()
         self._generate_fields()
 
-        self.block.write_code("}; // struct __M")
-        self.block.append_blank_line()
+        self.block.write_code(Code.Snippets.method_holder_end % {
+            "METHOD_HOLDER": self.namer.method_holder(self.full_name),
+            "METHODS_TABLE": self.namer.methods_table(self.full_name),
+            "GETSET_TABLE": self.namer.getset_table(self.full_name),
+            "BASES_REGISTER": self.namer.bases_register(self.full_name),
+        })
 
-        self._generate_method_table()
+        self._generate_methods_table()
         self._generate_getset_table()
 
         self._generate_pytypeobject()
-        self._generate_offset_base_ptr_func()
+        self._generate_base_ptr_fixer()
         self._generate_bases_register()
         self._generate_register()
 
@@ -327,7 +333,7 @@ class Class(object):
                 tmp_type = f.type.class_value_to_ref(const=True)
 
             self.block.write_code(tmp_type.get_build_value_idecl(
-                "cxx_obj->" + f.raw_name, namer=self.namer
+                "py_cxx_obj->" + f.raw_name, namer=self.namer
             ))
 
             self.block.append_blank_line()
@@ -357,12 +363,12 @@ class Class(object):
             if f.type.is_class_value():
                 self.block.write_lines((
                     "PBPP_BEGIN_ALLOW_THREADS",
-                    "cxx_obj->%s = %s;" % (f.raw_name, f.name),
+                    "py_cxx_obj->%s = %s;" % (f.raw_name, f.name),
                     "PBPP_END_ALLOW_THREADS",
                     "",
                 ))
             else:
-                self.block.write_code("cxx_obj->%s = %s;" % (f.raw_name, f.name))
+                self.block.write_code("py_cxx_obj->%s = %s;" % (f.raw_name, f.name))
 
             self.block.write_code("return 0;")
 
@@ -375,29 +381,36 @@ class Class(object):
             self._generate_setter(f)
 
     def _generate_getset_table(self):
-        self.block.write_code(Code.Snippets.field_table_begin)
+        method_holder = self.namer.method_holder(self.full_name)
+
+        self.block.write_code(Code.Snippets.getset_table_begin % (
+            method_holder, self.namer.getset_table(self.full_name),
+        ))
 
         def setter_name(field):
             if field.type.is_copy_assignable():
-                return "__M::" + self.namer.setter(field.raw_name)
+                return method_holder + "::" + self.namer.setter(field.raw_name)
             else:
                 return "nullptr"
 
         for f in self.fields:
-            self.block.write_code(Code.Snippets.field_table_entry % {
-                "GETTER": "__M::" + self.namer.getter(f.raw_name),
+            self.block.write_code(Code.Snippets.getset_table_entry % {
+                "GETTER": method_holder + "::" + self.namer.getter(f.raw_name),
                 "SETTER": setter_name(f),
                 "NAME": f.raw_name,
             })
 
-        self.block.write_code(Code.Snippets.field_table_end)
+        self.block.write_code(Code.Snippets.getset_table_end)
 
     def _generate_register(self):
         template_args = {
-            "REGISTER": self.namer.register(self.full_name),
+            "REGISTER": self.namer.class_register(self.full_name),
             "PYTYPE": self.namer.pytype(self.full_name),
             "PYSIDE_SHORT": self.namer.to_python(self.name),
             "PYSIDE": self.namer.to_python(self.full_name),
+            "BASES_REGISTER": self.namer.bases_register(self.full_name),
+            "ENUMS_REGISTER": self.namer.enums_register(self.full_name),
+            "METHOD_HOLDER": self.namer.method_holder(self.full_name),
         }
 
         if self.nester:
@@ -424,9 +437,10 @@ class Class(object):
             quick_borrow = ""
 
         template_args = {
+            "BORROWER": self.namer.borrower(self.full_name),
             "CLASS": self.full_name,
             "WRAPT": self.get_wrapt_class_name(),
-            "BORROWER": self.namer.borrower(self.full_name),
+            "BASE_PTR_FIXER": self.namer.base_ptr_fixer(self.full_name),
             "PYOBJ_STRUCT": self.namer.pyobj(self.full_name),
             "PYTYPE": self.namer.pytype(self.full_name),
             "QUICK_BORROW": quick_borrow,
@@ -446,9 +460,10 @@ class Class(object):
             init_helper_self = Code.Snippets.init_helper_self
 
         self.block.write_code(Code.Snippets.copyer % {
+            "COPYER": self.namer.copyer(self.full_name),
             "CLASS": self.full_name,
             "WRAPT": self.get_wrapt_class_name(),
-            "COPYER": self.namer.copyer(self.full_name),
+            "BASE_PTR_FIXER": self.namer.base_ptr_fixer(self.full_name),
             "INIT_HELPER_SELF": init_helper_self,
             "PYOBJ_STRUCT": self.namer.pyobj(self.full_name),
             "PYTYPE": self.namer.pytype(self.full_name),
@@ -483,7 +498,7 @@ class Class(object):
                 if index == 0:
                     self.master_bases |= base.master_bases
 
-    def _generate_offset_base_ptr_func(self):
+    def _generate_base_ptr_fixer(self):
         secondly_bases = self.all_bases - self.master_bases
 
         for base in set(self.direct_bases) | secondly_bases:
@@ -495,16 +510,19 @@ class Class(object):
             self.block.append_blank_line()
 
         if len(secondly_bases) == 0:
-            self.block.write_code(Code.Snippets.offset_base_ptr_simple)
+            self.block.write_code(Code.Snippets.base_ptr_fixer_simple % {
+                "BASE_PTR_FIXER": self.namer.base_ptr_fixer(self.full_name),
+            })
         else:
-            self.block.write_code(Code.Snippets.offset_base_ptr_header % (
-                self.namer.pytype(self.full_name),
-            ))
+            self.block.write_code(Code.Snippets.base_ptr_fixer_header % {
+                "THIS_CLASS": self.namer.pytype(self.full_name),
+                "BASE_PTR_FIXER": self.namer.base_ptr_fixer(self.full_name),
+            })
 
             self.block.indent()
 
             for base in secondly_bases:
-                self.block.write_code(Code.Snippets.offset_base_ptr_item % {
+                self.block.write_code(Code.Snippets.base_ptr_fixer_item % {
                     "BASE_PYTYPE": self.namer.pytype(base),
                     "BASE": base,
                     "WRAPT": self.get_wrapt_class_name(),
@@ -519,7 +537,10 @@ class Class(object):
         self.block.append_blank_line()
 
     def _generate_bases_register(self):
-        self.block.write_code(Code.Snippets.register_bases_sig)
+        self.block.write_code(Code.Snippets.register_bases_sig % (
+            self.namer.method_holder(self.full_name),
+            self.namer.bases_register(self.full_name),
+        ))
 
         if len(self.direct_bases) == 0:
             self.block.lines[-1] += " {}\n"
@@ -546,7 +567,8 @@ class Class(object):
                     })
 
     def _generate_enums(self):
-        self.block.write_code(Code.Snippets.register_enums_sig)
+        self.block.write_code(Code.Snippets.register_enums_sig %
+                              self.namer.enums_register(self.full_name))
 
         if len(self.enums.values) > 0:
             with CodeBlock.BracketThis(self.block):
@@ -560,29 +582,33 @@ class Class(object):
     def _generate_pytypeobject(self):
         tp_obj = pytypeobject.PyTypeObject()
         tp_obj.slots["tp_name"] = "%s.%s" % (
-            self.namer.package(), self.namer.fmt_path(self.full_name)
+            self.namer.package(), self.namer.cxx_path_to_pythonic(self.full_name)
         )
 
         tp_obj.slots["tp_basicsize"] = "sizeof(%s)" % self.namer.pyobj(self.full_name)
         tp_obj.slots["typestruct"] = self.namer.pytype(self.full_name)
 
+        method_holder = self.namer.method_holder(self.full_name)
+
         # Always define an init function
         # For uninstantiatable classes, tell the caller
-        ctor = "__M::" + self.namer.constructor(self.full_name)
+        ctor = method_holder + "::" + self.namer.constructor(self.full_name)
         tp_obj.slots["tp_init"] = ctor
 
         # Always define a dealloc function
-        dtor = "__M::" + self.namer.destructor(self.full_name)
+        dtor = method_holder + "::" + self.namer.destructor(self.full_name)
         tp_obj.slots["tp_dealloc"] = dtor
 
         if self.allows_subclassing():
             tp_obj.slots["tp_flags"] = "Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE"
 
         if not self.methods.empty():
-            tp_obj.slots["tp_methods"] = "__methods"
+            table = self.namer.methods_table(self.full_name)
+            tp_obj.slots["tp_methods"] = method_holder + "::" + table
 
         if len(self.fields) > 0:
-            tp_obj.slots["tp_getset"] = "__getsets"
+            table = self.namer.getset_table(self.full_name)
+            tp_obj.slots["tp_getset"] = method_holder + "::" + table
 
         tp_obj.generate(self.block)
 
@@ -595,7 +621,7 @@ class Class(object):
         assert len(signatures) == len(actions)
 
         func_name = func_name.upper()
-        label_ok = "__%s_OK" % func_name
+        label_ok = "PBPP__%s_OK" % func_name
 
         self.block.write_code(Code.Snippets.overloading_exception_cache % len(signatures))
 
@@ -615,7 +641,7 @@ class Class(object):
                 err_handler = (Code.Snippets.overloading_restore_exceptions %
                                len(signatures)) + err_return
 
-            with CodeBlock.BracketThis(self.block, "___OVERLOAD___() "):
+            with CodeBlock.BracketThis(self.block, preamble=""):
                 r = Code.Snippets.overloading_cache_exception + err_handler
                 self._write_args_parsing_code(sig, r, pyside_debug_name)
 
@@ -710,13 +736,14 @@ class Class(object):
 
             interfaces = Types.PythonAwareClassRegistry.find(self.full_name)
             if interfaces:
-                self_setter = "self->cxx_obj->" + interfaces.self_setter
-                self.block.write_code((self_setter % "(PyObject *) self") + ';')
+                self_setter = "py_self->cxx_obj->" + interfaces.self_setter
+                self.block.write_code((self_setter % "(PyObject *) py_self") + ';')
 
             if self._require_wrapper_class():
-                self.block.write_code("self->cxx_obj->self = self;")
+                self.block.write_code("py_self->cxx_obj->self = py_self;")
 
             self.block.write_code(Code.Snippets.ctor_actions_more % (
+                self.namer.base_ptr_fixer(self.full_name),
                 self.flags_assigner.assign(self.full_name)
             ))
 
@@ -740,8 +767,8 @@ class Class(object):
     def _generate_methods(self):
         self.methods.generate_methods(self.block, self.namer, self)
 
-    def _generate_method_table(self):
-        self.methods.generate_method_table(self.block, self.namer, self)
+    def _generate_methods_table(self):
+        self.methods.generate_methods_table(self.block, self.namer, self)
 
     def allows_subclassing(self):
         return not (self.final or

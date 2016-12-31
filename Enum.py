@@ -53,7 +53,7 @@ class Enum(object):
         if len(self.values) == 0:
             return
 
-        block.write_code("EnumValue __values[] = {")
+        block.write_code("static pbpp::EnumValue s_values[] = {")
         block.indent()
 
         for name in sorted(self.values.keys()):

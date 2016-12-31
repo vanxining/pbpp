@@ -12,8 +12,8 @@ namespace pbpp {
 struct StdLayout {
     PyObject_HEAD
     void *cxx_obj;
-    FpOffsetBase fp_offset_base;
-    pbpp_flag_t flags;
+    pbpp::FpOffsetBase fp_offset_base;
+    pbpp::flag_t flags;
 };
 
 int GetMethodArgsCount(PyObject *py_method) {
@@ -202,7 +202,6 @@ unsigned char ToUnsignedChar(PyObject *obj) {
 }
 
 } // namespace Types
-} // namespace pbpp
 
 void RegisterEnumValues(EnumValue *val, PyObject *tp_dict) {
     while (val->name) {
@@ -236,7 +235,7 @@ int PyGILState_Check() {
 }
 #endif
 
-PyGILState_STATE PyBeginBlockThreads() {
+PyGILState_STATE BeginBlockThreads() {
     if (!Py_IsInitialized()) {
         return PyGILState_LOCKED;
     }
@@ -244,7 +243,7 @@ PyGILState_STATE PyBeginBlockThreads() {
     return PyGILState_Ensure();
 }
 
-void PyEndBlockThreads(PyGILState_STATE blocked) {
+void EndBlockThreads(PyGILState_STATE blocked) {
     if (!Py_IsInitialized()) {
         return;
     }
@@ -252,25 +251,23 @@ void PyEndBlockThreads(PyGILState_STATE blocked) {
     PyGILState_Release(blocked);
 }
 
-PyThreadBlocker::PyThreadBlocker()
-    : m_state(PyBeginBlockThreads()), m_disabled(false) {}
+ThreadBlocker::ThreadBlocker()
+    : m_state(BeginBlockThreads()), m_disabled(false) {}
 
-PyThreadBlocker::~PyThreadBlocker() {
+ThreadBlocker::~ThreadBlocker() {
     if (!m_disabled) {
-        PyEndBlockThreads(m_state);
+        EndBlockThreads(m_state);
     }
 }
 
-void PyThreadBlocker::Disable() {
+void ThreadBlocker::Disable() {
     assert(!m_disabled);
 
-    PyEndBlockThreads(m_state);
+    EndBlockThreads(m_state);
     m_disabled = true;
 }
 
 #endif
-
-namespace pbpp {
 
 CxxException::CxxException(PyObject *exception, const char *desc)
     : exception(exception), desc(desc) {
@@ -289,4 +286,4 @@ EXCEPTION_CTOR(CallPyMethodError, PyExc_RuntimeError)
 EXCEPTION_CTOR(NullReferenceError, PyExc_ReferenceError)
 EXCEPTION_CTOR(ArgumentTypeError, PyExc_TypeError)
 
-}
+} // namespace pbpp

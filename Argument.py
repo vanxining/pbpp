@@ -11,23 +11,6 @@ def from_xml(root, node):
 class Argument(object):
     """Represents function argument as well as return type.
     """
-
-    _predefined = (
-        # argument common
-        "self", "args", "kwargs",
-
-        # function common
-        "obj", "exceptions", "exdtor", "_saved", # wxPyBeginAllowThreads
-        "i", "cnt",  # loop iterator
-
-        # virtual function
-        "py_method", "py_method_name", "_blocker",
-        "vm_retval", "py_vm_retval",
-
-        # getter & setter
-        "py_value", "py_closure",
-    )
-
     def __init__(self, ctype=None, name=None, defv=None, internal=False):
         assert ctype is None or isinstance(ctype, Types.Type)
 
@@ -37,10 +20,12 @@ class Argument(object):
 
     def _set_name(self, name, internal=False):
         self.raw_name = name
-        if internal or name not in Argument._predefined:
+
+        # TODO: Why name is None?
+        if internal or name is None or not name.startswith("py_"):
             self.name = name
         else:
-            self.name = name + '0'
+            self.name = '_' + name  # TODO: Customizable using a namer
 
     def parse_xml(self, root, node):
         self.type = Types.get_type_by_id(node.attrib["type"], root)

@@ -51,7 +51,7 @@ class WstringConv(Converters.Converter):
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
         common_part = "PyUnicode_FromWideChar({1}.c_str(), {1}.length())"
-        boilerplate = "PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
+        boilerplate = "pbpp::PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
 
         return boilerplate.format(common_part).format(py_var_name, var_name)
 

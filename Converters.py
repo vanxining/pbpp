@@ -21,12 +21,12 @@ class Converter(object):
         return "O"
 
     def args_parsing_declare_vars(self, cpp_type, var_name, defv=None):
-        return '\n'.join(("PyObject *py_%s = nullptr;" % var_name,
+        return '\n'.join(("PyObject *py__%s = nullptr;" % var_name,
             cpp_type.declare_var(var_name, defv),
         ))
 
     def args_parsing_interim_vars(self, cpp_type, arg_name, pytype):
-        return "&py_%s" % arg_name
+        return "&py__%s" % arg_name
 
     def args_parsing_extracting_code(self, cpp_type, arg_name, defv, error_return, namer):
         raise NotImplementedError()
@@ -120,7 +120,7 @@ class StrConv(Converter):
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
         common_part = "PyString_FromString({})"
-        boilerplate = "PyObjectPtr {{}}({});" if raii else "PyObject *{{}} = {};"
+        boilerplate = "pbpp::PyObjectPtr {{}}({});" if raii else "PyObject *{{}} = {};"
 
         return boilerplate.format(common_part).format(py_var_name, var_name)
 
@@ -160,7 +160,7 @@ class WcsConv(Converter):
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
         common_part = "PyUnicode_FromWideChar({1}, wcslen({1}))"
-        boilerplate = "PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
+        boilerplate = "pbpp::PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
 
         return boilerplate.format(common_part).format(py_var_name, var_name)
 
@@ -192,14 +192,14 @@ class ContainerConv(Converter):
         return "O!" if not cpp_type.is_ptr() else "O"
 
     def args_parsing_declare_vars(self, cpp_type, var_name, defv=None):
-        return "PyObject *py_%s = nullptr;" % var_name
+        return "PyObject *py__%s = nullptr;" % var_name
 
     def args_parsing_interim_vars(self, cpp_type, arg_name, pytype):
         interim_vars = []
         if not cpp_type.is_ptr():
             interim_vars.append('&' + self.real_pytype)
 
-        interim_vars.append("&py_" + arg_name)
+        interim_vars.append("&py__" + arg_name)
         return ", ".join(interim_vars)
 
 
@@ -225,7 +225,7 @@ class ListConv(ContainerConv):
     def args_parsing_extracting_code(self, cpp_type, arg_name, defv, error_return, namer):
         reference_type = self.reference_type(cpp_type)
         should_write_back = reference_type in ("REF", "PTR",)
-        py_var_name = "py_" + arg_name
+        py_var_name = "py__" + arg_name
 
         block = CodeBlock.CodeBlock()
 
@@ -291,13 +291,13 @@ class ListConv(ContainerConv):
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
         item_building_code = self.T.get_build_value_idecl(
-            var_name + "[i]", py_var_name="py_item", namer=namer
+            var_name + "[py_index]", py_var_name="py_item", namer=namer
         )
 
         boilerplate = Code.Snippets.build_list_raii if raii else Code.Snippets.build_list
         return boilerplate % {
             "PY_VAR_NAME": py_var_name,
-            "SIZE_TYPE": cpp_type.intrinsic_type() + "::size_type",
+            "SIZE_TYPE": "size_t",
             "COUNT": var_name + ".size()",
             "ITEM_BUILDING_CODE": item_building_code,
         }
@@ -327,7 +327,7 @@ class DictConv(ContainerConv):
     def args_parsing_extracting_code(self, cpp_type, arg_name, defv, error_return, namer):
         reference_type = self.reference_type(cpp_type)
         should_write_back = reference_type in ("REF", "PTR",)
-        py_var_name = "py_" + arg_name
+        py_var_name = "py__" + arg_name
 
         block = CodeBlock.CodeBlock()
 
@@ -409,11 +409,11 @@ class DictConv(ContainerConv):
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
         key_building_code = self.K.get_build_value_idecl(
-            "kv.first", py_var_name="py_dict_key", namer=namer
+            "py_kv.first", py_var_name="py_dict_key", namer=namer
         )
 
         val_building_code = self.V.get_build_value_idecl(
-            "kv.second", py_var_name="py_dict_value", namer=namer
+            "py_kv.second", py_var_name="py_dict_value", namer=namer
         )
 
         boilerplate = Code.Snippets.build_dict_raii if raii else Code.Snippets.build_dict
