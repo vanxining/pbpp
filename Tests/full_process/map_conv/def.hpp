@@ -1,5 +1,17 @@
+#ifndef __CASTXML__
+
 #include <map>
+#include <string>
 
 using namespace std;
 
-int foo(map<const char *, int> &dict);
+#else
+
+template <class K, class V>
+class map;
+
+class wstring;
+
+#endif
+
+int foo(map<wstring, int> &dict);

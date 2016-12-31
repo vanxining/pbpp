@@ -1,6 +1,6 @@
 #include "def.hpp"
 
-int foo(map<const char *, int> &dict) {
-    dict["price"] = 456;
-    dict["index"] = 999;
+int foo(map<wstring, int> &dict) {
+    dict[L"price"] = 456;
+    dict[L"index"] = 999;
 }

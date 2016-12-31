@@ -20,16 +20,13 @@ class HeaderProvider(Module.HeaderProvider):
     def klass(self, cls):
         return "def.hpp",
 
-    @staticmethod
-    def module(name):
+    def module(self, name):
         return "def.hpp",
 
-    @staticmethod
-    def normalize(full_path):
+    def normalize(self, full_path):
         return os.path.split(full_path)[1]
 
-    @staticmethod
-    def pch():
+    def pch(self):
         return ""
 
 
@@ -56,7 +53,7 @@ class Blacklist(Module.Blacklist):
     }
 
     _namespaces = {
-        "std", "stdext",
+        "std", "stdext", "__gnu_cxx",
     }
 
     _method_patterns = []
