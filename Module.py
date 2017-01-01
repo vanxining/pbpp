@@ -227,8 +227,7 @@ class Module(object):
 
         self.file_node = file_node
         self.header_decl = self.header_provider.normalize(file_node.attrib["name"])
-
-        self.header_jar.add_headers((self.header_decl,))
+        self.modified = self.header_jar.add_headers((self.header_decl,))
 
     def process_file(self, root, file_node):
         Session.begin(self.header_jar)

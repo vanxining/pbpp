@@ -9,6 +9,8 @@ class HeaderJar(object):
     def add_headers(self, headers):
         assert isinstance(headers, (list, tuple, set,))
 
+        num_headers = len(self.headers)
+
         for header in headers:
             assert len(header) > 0
 
@@ -24,6 +26,8 @@ class HeaderJar(object):
                 decl = '#include "%s"' % header
                 if decl not in self.headers:
                     self.headers.append(decl)
+
+        return num_headers != len(self.headers)
 
     def remove_header(self, header_decl):
         try:
