@@ -78,6 +78,8 @@ def print_and_clear_ignored_symbols_registry():
 
 # noinspection PyBroadException,PyUnusedLocal,PyMethodMayBeStatic
 class MainWindow(wx.Frame):
+    TIME_CONSUMING = "This may take minutes!"
+
     def __init__(self):
         wx.Frame.__init__(self)
 
@@ -358,7 +360,7 @@ class MainWindow(wx.Frame):
     def on_remove_header(self, event):
         selected = self.get_selected_header_index()
         if selected != -1:
-            if self.ask():
+            if self.ask(u""):
                 self.header_list.DeleteItem(selected)
                 self.header_list.SetFocus()
 
@@ -410,7 +412,7 @@ class MainWindow(wx.Frame):
         return True
 
     def on_castxml_all(self, event):
-        if not self.ask():
+        if not self.ask(self.TIME_CONSUMING):
             return
 
         for header in self.enabled():
@@ -482,9 +484,8 @@ class MainWindow(wx.Frame):
 
             self.logger.AppendText(u"\nDone.")
 
-    def ask(self):
-        answer = wx.MessageBox(u"Are you sure?\nThis may take minutes!",
-                               u"Confirm",
+    def ask(self, msg):
+        answer = wx.MessageBox(u"Are you sure?\n" + msg, u"Confirm",
                                wx.YES_NO | wx.ICON_WARNING,
                                self)
 
@@ -523,7 +524,7 @@ class MainWindow(wx.Frame):
             self.current.mark_as_parsed(header)
 
     def on_reparse_all_headers(self, event):
-        if not self.ask():
+        if not self.ask(self.TIME_CONSUMING):
             return
 
         self.logger.Clear()
