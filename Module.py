@@ -312,6 +312,11 @@ class Module(object):
                 if cls_node.attrib.get("incomplete", None) == "1":
                     continue
 
+                # TODO: anonymous class
+                # typedef struct { int a; } A;
+                if cls_node.attrib.get("name", "") == "":
+                    continue
+
                 print("")
                 print("---------------------------------------------")
                 print(">>> %s <<<" % full_name)
