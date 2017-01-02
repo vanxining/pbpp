@@ -2,6 +2,7 @@
 
 import ConfigParser
 import importlib
+import logging
 import os
 import sys
 import thread
@@ -45,33 +46,22 @@ class Worker(object):
 class MyRedirector(object):
     def __init__(self, target):
         self.target = target
+        self.cached = []
 
     def write(self, msg):
         if not isinstance(msg, unicode):
             msg = msg.decode()
 
         if msg:
-            event = ProgressEvent(message=msg)
-            wx.PostEvent(self.target, event)
+            self.cached.append(msg)
 
     def flush(self):
-        pass
+        concated = "".join(self.cached)
+        if concated:
+            event = ProgressEvent(message=concated)
+            wx.PostEvent(self.target, event)
 
-
-class RedirectStdStreams(object):
-    def __init__(self, stdout=None, stderr=None):
-        self._stdout = stdout or sys.stdout
-        self._stderr = stderr or sys.stderr
-
-    def __enter__(self):
-        self.old_stdout, self.old_stderr = sys.stdout, sys.stderr
-        self.old_stdout.flush(); self.old_stderr.flush()
-        sys.stdout, sys.stderr = self._stdout, self._stderr
-
-    def __exit__(self, exc_type, exc_value, tb):
-        self._stdout.flush(); self._stderr.flush()
-        sys.stdout = self.old_stdout
-        sys.stderr = self.old_stderr
+        self.cached = []
 
 
 def print_and_clear_ignored_symbols_registry():
@@ -79,7 +69,7 @@ def print_and_clear_ignored_symbols_registry():
     Session.clear_ignored_symbols_registry()
 
 
-# noinspection PyBroadException,PyUnusedLocal,PyMethodMayBeStatic
+# noinspection PyBroadException,PyUnusedLocal,PyMethodMayBeStatic,PyAttributeOutsideInit
 class MainWindow(wx.Frame):
     TIME_CONSUMING = "This may take minutes!"
 
@@ -124,8 +114,7 @@ class MainWindow(wx.Frame):
         wx.PyBind(self, wx.EVT_LIST_ITEM_CHECKED, self.on_enable_header)
         wx.PyBind(self, wx.EVT_LIST_ITEM_UNCHECKED, self.on_enable_header)
 
-        self.logger = Logger.ListBoxLogger(self.logger)
-        wx.PyBind(self.logger.logger_ctrl, wx.EVT_KEY_DOWN, self.on_logger_key_down)
+        self.prepare_logger()
 
         wx.PyBind(self, EVT_PROGRESS, self.on_progress)
         wx.PyBind(self, EVT_WORKER_FIN, self.on_worker_finished)
@@ -187,6 +176,21 @@ class MainWindow(wx.Frame):
                 handler = getattr(self, "on_" + name, None)
                 if handler is not None:
                     wx.PyBind(target, event_type, handler, xid)
+
+    def prepare_logger(self):
+        self.logger = Logger.ListBoxLogger(self.logger)
+        wx.PyBind(self.logger.logger_ctrl, wx.EVT_KEY_DOWN, self.on_logger_key_down)
+
+        logging_level = self.config.get("Default", "logging_level")
+        if logging_level and hasattr(logging, logging_level):
+            logging_level = getattr(logging, logging_level)
+        else:
+            sys.stderr.write("Invalid logging level: %s\n" % logging_level)
+            logging_level = logging.INFO
+
+        logging.basicConfig(level=logging_level,
+                            format="[%(levelname)s] %(message)s",
+                            stream=MyRedirector(self))
 
     def current_proj(self):
         return self.proj_dir + "/Current.pbpp"
@@ -373,7 +377,7 @@ class MainWindow(wx.Frame):
     def on_remove_header(self, event):
         selected = self.get_selected_header_index()
         if selected != -1:
-            if self.ask(u""):
+            if self.ask(u"Delete from header list: `%s`" % self.get_selected_header()):
                 self.header_list.DeleteItem(selected)
                 self.header_list.SetFocus()
 
@@ -400,7 +404,7 @@ class MainWindow(wx.Frame):
 
         if is_path(self.mod_proj.castxml_bin):
             if not os.path.exists(self.mod_proj.castxml_bin):
-                fmt = u"Path to CastXML not valid:\n    %s\n"
+                fmt = u"Path to CastXML binary not valid:\n    %s\n"
                 self.logger.append(fmt % self.mod_proj.castxml_bin)
 
                 return False
@@ -445,7 +449,7 @@ class MainWindow(wx.Frame):
     def on_castxml(self, event):
         path = self.get_selected_header()
         if not path:
-            self.logger.set(u"Please select one header first.")
+            self.logger.set(u"Please select one header first")
             return
 
         if self.invoke_castxml(path):
@@ -470,20 +474,19 @@ class MainWindow(wx.Frame):
             worker = Worker(self, self.on_compress, self.on_compression_done)
             worker.start()
         else:
-            self.logger.append(u"Error parsing `%s`.\n" % self.hanging_header)
+            self.logger.append(u"Failed to parse `%s`" % self.hanging_header)
             self.on_compression_done()
 
     def on_compress(self):
-        with RedirectStdStreams(self.redirector, self.redirector):
-            headers = self.mod_proj.select_headers(self.hanging_header, self.hanging_xml)
-            if len(headers) > 0:
-                c = Xml.Compressor()
-                c.compress(headers, self.hanging_xml, self.hanging_xml)
+        headers = self.mod_proj.select_headers(self.hanging_header, self.hanging_xml)
+        if len(headers) > 0:
+            c = Xml.Compressor()
+            c.compress(headers, self.hanging_xml, self.hanging_xml)
 
-                print(u"Written to `%s`." % self.hanging_xml)
-            else:
-                print(u"Error compressing XML output for `%s`: No headers selected." %
-                      self.get_selected_header())
+            logging.info(u"Written to `%s`.", self.hanging_xml)
+        else:
+            fmt = u"Failed to compress XML output for `%s`: No header(s) selected"
+            logging.error(fmt, self.get_selected_header())
 
     def on_compression_done(self):
         self.hanging_header = ""
@@ -493,7 +496,7 @@ class MainWindow(wx.Frame):
             self.do_batch_castxml_tasks()
         else:
             self.enable_console(True)
-            self.logger.append(u"\nDone.")
+            logging.info(u"DONE")
 
     def ask(self, msg):
         answer = wx.MessageBox(u"Are you sure?\n" + msg, u"Confirm",
@@ -550,28 +553,28 @@ class MainWindow(wx.Frame):
         self.current = self.mod_proj.Project()
         time_begin = time.time()
 
-        with RedirectStdStreams(self.redirector, self.redirector):
-            for header in self.enabled():
-                print(header)
-                try:
-                    self.parse_header(header)
-                except:
-                    traceback.print_exc()
-                    return
+        for header in self.enabled():
+            logging.info(u"Parsing `%s`...", header)
+            try:
+                self.parse_header(header)
+            except:
+                logging.exception(u"Failed to parse `%s`" % header)
+                return
 
-            self.finish_and_write_back()
+        self.finish_and_write_back()
 
-            if self.print_ignored:
-                print_and_clear_ignored_symbols_registry()
+        if self.print_ignored:
+            print_and_clear_ignored_symbols_registry()
 
-            print(u"\n(Time elapsed: %gs)" % (time.time() - time_begin))
+        logging.info(u"")
+        logging.info(u"Time elapsed: %gs" % (time.time() - time_begin))
 
     def on_enable_header(self, event):
         self.serialize()
 
     def on_reparse_header(self, event):
         if self.get_selected_header_index() == -1:
-            self.logger.set(u"Please select one header first.")
+            self.logger.set(u"Please select one header first")
             return
 
         self.enable_console(False)
@@ -581,13 +584,12 @@ class MainWindow(wx.Frame):
         w.start()
 
     def do_reparse_header(self):
-        with RedirectStdStreams(self.redirector, self.redirector):
-            self.current.try_update()
-            self.parse_header(self.get_selected_header())
-            self.finish_and_write_back()
+        self.current.try_update()
+        self.parse_header(self.get_selected_header())
+        self.finish_and_write_back()
 
-            if self.print_ignored:
-                print_and_clear_ignored_symbols_registry()
+        if self.print_ignored:
+            print_and_clear_ignored_symbols_registry()
 
     def on_rewrite_all_output_files(self, event):
         self.logger.clear()
@@ -597,9 +599,8 @@ class MainWindow(wx.Frame):
         w.start()
 
     def do_rewrite_all_output_files(self):
-        with RedirectStdStreams(self.redirector, self.redirector):
-            self.current.root_mod.mark_as_dirty()
-            self.finish_and_write_back()
+        self.current.root_mod.mark_as_dirty()
+        self.finish_and_write_back()
 
     def finish_and_write_back(self):
         try:
@@ -610,14 +611,14 @@ class MainWindow(wx.Frame):
             return
 
         if not self.logger.is_empty():
-            print(u"")
+            logging.info(u"")
 
-        print(u"Writing to disk...")
+        logging.info(u"Writing to disk...")
         self.current.root_mod.generate(
             self.mod_proj.output_cxx_dir, self.mod_proj.output_cxx_ext
         )
 
-        print(u"\nDONE.")
+        logging.info(u"DONE")
 
     def on_worker_finished(self, event):
         if event.done_listener:
@@ -640,7 +641,7 @@ class MainWindow(wx.Frame):
     def on_locate_xml(self, event):
         header_path = self.get_selected_header()
         if not header_path:
-            self.logger.set(u"Please select one header first.")
+            self.logger.set(u"Please select one header first")
             return
 
         xml_path = self.xml_path(header_path)
@@ -648,14 +649,17 @@ class MainWindow(wx.Frame):
         if os.path.exists(xml_path):
             self.logger.set(xml_path)
         else:
-            self.logger.set(u"Not found.")
+            self.logger.set(u"Not found")
 
     # noinspection PyProtectedMember
     def on_stats(self, event):
+        self.logger.clear()
+
         for cls in sorted(Registry._registry.values()):
             self.logger.append(cls.full_name + u"\n")
 
         self.logger.append(u"\n# of classes: %d" % len(Registry._registry))
+        self.logger.go_to_end()
 
     def on_save(self, event):
         self.save()
@@ -674,22 +678,21 @@ class MainWindow(wx.Frame):
         w.start()
 
     def do_start(self):
-        with RedirectStdStreams(self.redirector, self.redirector):
-            if self.count_enabled() == len(self.current.parsed):
-                self.try_restore_from_stable()
+        if self.count_enabled() == len(self.current.parsed):
+            self.try_restore_from_stable()
 
-            # No newly added headers -- a rough trick
-            if self.count_enabled() == len(self.current.parsed):
-                self.finish_and_write_back()
-                return
-
-            self.current.try_update()
-
-            for header in self.enabled():
-                if header not in self.current.parsed:
-                    self.parse_header(header)
-
+        # No newly added headers -- a rough trick
+        if self.count_enabled() == len(self.current.parsed):
             self.finish_and_write_back()
+            return
 
-            if self.print_ignored:
-                print_and_clear_ignored_symbols_registry()
+        self.current.try_update()
+
+        for header in self.enabled():
+            if header not in self.current.parsed:
+                self.parse_header(header)
+
+        self.finish_and_write_back()
+
+        if self.print_ignored:
+            print_and_clear_ignored_symbols_registry()

@@ -67,14 +67,17 @@ def _do_sort_classes(klasses):
 
             return
 
-    print("")
-    print([cls.full_name for cls in _sorted])
-    print("")
+    from logging import error
+
+    error("")
+    error([cls.full_name for cls in _sorted])
 
     for cls in klasses.values():
-        print(cls.ref.full_name, cls.depends)
+        error("%s: %s", cls.ref.full_name, cls.depends)
 
-    raise RuntimeError("Unexposed classes as base classes exist.")
+    error("")
+
+    raise RuntimeError("Unexposed classes as base classes exist")
 
 
 def sort_out():

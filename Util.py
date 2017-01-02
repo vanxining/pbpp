@@ -1,4 +1,5 @@
 import importlib
+import logging
 import os
 
 
@@ -8,7 +9,7 @@ def smart_write(path, content, log=True):
             outf.write(content)
 
         if log:
-            print("Written `%s`." % os.path.realpath(path))
+            logging.info("Written `%s`.", os.path.realpath(path))
 
         return True
 
@@ -20,7 +21,7 @@ def smart_copy(src, dst, log=True):
 
     if smart_write(dst, content, log=False):
         if log:
-            print("Copied to `%s`." % os.path.realpath(dst))
+            logging.info("Copied to `%s`.", os.path.realpath(dst))
 
 
 def split_namespaces(namespaces):
@@ -63,7 +64,9 @@ def context_of(node, root):
         try:
             ns = node.attrib["name"]
         except AttributeError, e:
-            print("!! Lacks `%s` !!" % node_id)
+            fmt = 'XML node attribute `name` not found: tag="%s", attrib=%s'
+            logging.exception(fmt, node.tag, node.attrib)
+
             raise e
 
         if ns != "::":
@@ -83,6 +86,7 @@ def full_name_of(node, root):
         return node.attrib["name"]
 
 
+# noinspection PyProtectedMember
 def load2(name):
     reloaded = False
 
@@ -95,14 +99,14 @@ def load2(name):
         pyc = True
 
     mtime = os.path.getmtime(path)
-    if hasattr(mod, "_loadtime") and mtime > mod._loadtime:
+    if hasattr(mod, "_pbpp_loadtime") and mtime > mod._pbpp_loadtime:
         if pyc and os.path.exists(mod.__file__):
             os.remove(mod.__file__)
 
         mod = reload(mod)
         reloaded = True
 
-    mod._loadtime = mtime
+    mod._pbpp_loadtime = mtime
 
     return mod, reloaded
 

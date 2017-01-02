@@ -1,3 +1,4 @@
+import logging
 import xml.etree.ElementTree as ET
 
 
@@ -59,7 +60,9 @@ class Compressor(object):
                     for subnode in node:
                         ET.SubElement(copy, subnode.tag, subnode.attrib)
             except AttributeError, e:
-                print(node.tag, node.attrib)
+                fmt = 'XML node attribute `id` not found: tag="%s", attrib=%s'
+                logging.exception(fmt, node.tag, node.attrib)
+
                 raise e
 
         self.tree = ET.ElementTree(new_root)

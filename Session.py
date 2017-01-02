@@ -1,3 +1,6 @@
+import logging
+
+
 _header_jars = []
 
 
@@ -41,8 +44,8 @@ def clear_ignored_symbols_registry():
 
 
 def print_ignored_symbols_registry():
-    print("")
-    print("---------------------------------------------")
+    logging.debug("")
+    logging.debug("---------------------------------------------")
 
     _print(ignored_namespaces, "ignored_namespaces")
     _print(ignored_fields, "ignored_fields")
@@ -57,8 +60,8 @@ def _print(container, var_name):
     if len(container) == 0:
         return
 
-    print("")
-    print("[%s]" % var_name)
+    logging.debug("")
+    logging.debug("[%s]" % var_name)
 
     for item in container:
-        print("  " + item)
+        logging.debug("  " + item)

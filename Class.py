@@ -1,3 +1,5 @@
+import logging
+
 import Access
 import Argument
 import Code.Snippets
@@ -685,7 +687,7 @@ class Class(object):
         self.has_public_copy_ctor = has_public_copy_ctor
 
     def _constructor(self, ctor):
-        print(ctor.attrib["demangled"])
+        logging.debug(ctor.attrib["demangled"])
 
         tk = TupleAndKeywords.TupleAndKeywords()
         for argn in ctor.findall("Argument"):

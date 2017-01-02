@@ -100,11 +100,12 @@ def _clean():
 def _print_header(package_name):
     msg = "Testing %s... (full process)" % package_name
 
-    print("\n\n")
-    print('*' * len(msg))
-    print(msg)
-    print('*' * len(msg))
-    print("\n\n")
+    from logging import debug
+    debug("\n\n")
+    debug('*' * len(msg))
+    debug(msg)
+    debug('*' * len(msg))
+    debug("\n\n")
 
 
 def run(tc_dir):

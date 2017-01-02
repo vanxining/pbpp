@@ -117,7 +117,8 @@ class MethodJar(object):
         return False
 
     def _method(self, mnode, root, free_function):
-        print(mnode.attrib["demangled"])
+        from logging import debug
+        debug(mnode.attrib["demangled"])
 
         m = Method(root, mnode, free_function)
         overloads = self.methods.setdefault(m.name, [])
@@ -186,8 +187,7 @@ class MethodJar(object):
 
             if not _validate_overloads(overloads):
                 ns = cls.full_name + "::" if cls else ""
-                print("`%s%s`: _validate_overloads() failed." % (ns, mname))
-                assert False
+                raise RuntimeError("`%s%s`: _validate_overloads() failed." % (ns, mname))
 
             signatures = []
             actions = []

@@ -1,8 +1,8 @@
 import cPickle as pickle
+import logging
 import os
 import shutil
 import tempfile
-import traceback
 
 import Registry
 
@@ -25,8 +25,7 @@ class ProjectBase(object):
 
                 return True
         except:
-            print("Failed to load state snapshot file")
-            traceback.print_exc()
+            logging.exception("Failed to load state snapshot file")
 
             return False
 
@@ -39,8 +38,7 @@ class ProjectBase(object):
 
                 return True
         except:
-            print("Failed to save state snapshot file")
-            traceback.print_exc()
+            logging.exception("Failed to save state snapshot file")
 
             return False
 

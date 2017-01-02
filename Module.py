@@ -1,3 +1,4 @@
+import logging
 import os
 import xml.etree.ElementTree as ET
 
@@ -325,17 +326,14 @@ class Module(object):
                 if cls_node.attrib.get("name", "") == "":
                     continue
 
-                print("")
-                print("---------------------------------------------")
-                print(">>> %s <<<" % full_name)
-                print("---------------------------------------------")
+                logging.info("---------------------------------------------")
+                logging.info(">>> %s <<<" % full_name)
+                logging.info("---------------------------------------------")
 
                 cls = Class.Class(self.root, cls_node, self)
                 self.register_class(cls)
 
-                print("---------------------------------------------")
-                print("")
-
+                # Inner (nested) classes
                 self._do_process_classes(cls_node.attrib["id"])
 
                 self.modified = True

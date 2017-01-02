@@ -145,12 +145,11 @@ class Type(object):
         try:
             cls = Registry.get_class(self.intrinsic_type())
             assert cls is not None
+
             return cls
         except:
-            print(self.intrinsic_type())
-
-            import traceback
-            traceback.print_exc()
+            from logging import exception
+            exception("Class `%s` not found in the registry", self.intrinsic_type())
 
             raise
 
