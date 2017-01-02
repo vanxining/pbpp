@@ -10,7 +10,7 @@ class DictConv(Converters.DictConv):
         Converters.DictConv.__init__(self, *args, **kwargs)
 
     def match(self, cpp_type):
-        return cpp_type.decl().startswith("std::map<std::basic_string<wchar_t>, int")
+        return cpp_type.decl().startswith("std::map<std::basic_string<wchar_t")
 
 
 # Test the conversion between C++ std::map and Python dict
