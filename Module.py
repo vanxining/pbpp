@@ -227,18 +227,27 @@ class Module(object):
 
         self.file_node = file_node
         self.header_decl = self.header_provider.normalize(file_node.attrib["name"])
-        self.modified = self.header_jar.add_headers((self.header_decl,))
 
     def process_file(self, root, file_node):
         Session.begin(self.header_jar)
 
         self._set_current_file(root, file_node)
 
+        # Do not add unneeded header files
+        modified = self.modified
+        self.modified = False
+
+        self._process_free_functions()
         self._process_global_constants()
         self._process_enums()
-        self._process_inner_namespaces()
-        self._process_free_functions()
+
+        if self.modified:
+            self.header_jar.add_headers((self.header_decl,))
+        else:
+            self.modified = modified
+
         self._process_classes()
+        self._process_inner_namespaces()
 
         Session.end()
 
