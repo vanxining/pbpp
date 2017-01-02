@@ -101,11 +101,10 @@ class MainWindow(wx.Frame):
 
         self.current = self.mod_proj.Project()
         if os.path.exists(self.current_proj()):
-            try:
-                self.current.load(self.current_proj())
-            except:
-                print("Current state snapshot file corrupted")
-                raise
+            if not self.current.load(self.current_proj()):
+                # Restore
+                os.remove(self.current_proj())
+                self.current = self.mod_proj.Project()
 
         self.process = None
         wx.PyBind(self, wx.EVT_END_PROCESS, self.on_castxml_done)
@@ -259,12 +258,20 @@ class MainWindow(wx.Frame):
         self.timer.Start(1500, wx.TIMER_ONE_SHOT)
 
     def on_restore_from_stable(self, event):
-        self.try_restore_from_stable()
-        self.make_toast(u"Restored")
+        ret = self.try_restore_from_stable()
+
+        if ret == 1:
+            self.make_toast(u"Restored")
+        elif ret == 0:
+            self.make_toast(u"Failed to restore")
+        else:
+            self.make_toast(u"No stable state snapshot file found")
 
     def try_restore_from_stable(self):
         if os.path.exists(self.stable_proj()):
-            self.current.load(self.stable_proj())
+            return 1 if self.current.load(self.stable_proj()) else 0
+
+        return -1
 
     def on_exit(self, event):
         self.Close()
@@ -480,7 +487,6 @@ class MainWindow(wx.Frame):
             self.do_batch_castxml_tasks()
         else:
             self.enable_console(True)
-            self.save()
 
             self.logger.AppendText(u"\nDone.")
 
@@ -492,8 +498,10 @@ class MainWindow(wx.Frame):
         return answer == wx.YES
 
     def on_save_as_stable(self, event):
-        self.current.save(self.stable_proj())
-        self.make_toast(u"Saved as stable")
+        if self.current.save(self.stable_proj()):
+            self.make_toast(u"Saved as stable")
+        else:
+            self.make_toast(u"Failed to save as stable")
 
     def on_clean_output_dir(self, event):
         folder = self.mod_proj.output_cxx_dir
@@ -546,7 +554,6 @@ class MainWindow(wx.Frame):
                     return
 
             self.finish_and_write_back()
-            self.save()
 
             if self.print_ignored:
                 print_and_clear_ignored_symbols_registry()
@@ -570,7 +577,6 @@ class MainWindow(wx.Frame):
             self.current.try_update()
             self.parse_header(self.get_selected_header())
             self.finish_and_write_back()
-            self.save()
 
             if self.print_ignored:
                 print_and_clear_ignored_symbols_registry()
@@ -668,7 +674,6 @@ class MainWindow(wx.Frame):
                     self.parse_header(header)
 
             self.finish_and_write_back()
-            self.save()  # Save current project
 
             if self.print_ignored:
                 print_and_clear_ignored_symbols_registry()

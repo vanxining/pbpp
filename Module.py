@@ -121,15 +121,6 @@ class PythonNamer(object):
 
 
 # noinspection PyUnusedLocal,PyMethodMayBeStatic
-class FlagsAssigner(object):
-    def __init__(self):
-        pass
-
-    def assign(self, cls_name):
-        return "pbpp::LifeTime::PYTHON"
-
-
-# noinspection PyUnusedLocal,PyMethodMayBeStatic
 class HeaderProvider(object):
     def __init__(self):
         pass
@@ -145,6 +136,15 @@ class HeaderProvider(object):
 
     def pch(self):
         return ""
+
+
+# noinspection PyUnusedLocal,PyMethodMayBeStatic
+class FlagsAssigner(object):
+    def __init__(self):
+        pass
+
+    def assign(self, cls_name):
+        return "pbpp::LifeTime::PYTHON"
 
 
 # noinspection PyUnusedLocal,PyMethodMayBeStatic
