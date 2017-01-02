@@ -229,7 +229,7 @@ class Class(object):
             else:
                 method_wrapper_base = self.nester or "pbpp::ScopedEnumDummy"
 
-            self.block.write_code("struct %s : public %s {" % (
+            self.block.write_code("struct %s : %s {" % (
                 method_holder, method_wrapper_base
             ))
         else:
@@ -923,7 +923,7 @@ class Class(object):
 
                 if m.args.size() > 0:
                     for arg in m.args.args:
-                        pyname = "py_" + arg.name
+                        pyname = "py__" + arg.name
                         names.append("(PyObject *) " + pyname)
 
                         memblock.write_code(arg.type.get_build_value_idecl(
@@ -957,13 +957,13 @@ class Class(object):
                         err_handler += Code.Snippets.throw_cxxexception % template_args
 
                         self.block.write_code(m.returns.get_extractor_code(
-                            "vm_retval", "py_vm_retval", err_handler, self.namer
+                            "py_cxx_vm_retval", "py_vm_retval", err_handler, self.namer
                         ))
 
                         self.block.append_blank_line()
-                        self.block.write_code("return vm_retval;")
+                        self.block.write_code("return py_cxx_vm_retval;")
 
-            del self.block.lines[-1]  # Remove the last blank line.
+            del self.block.lines[-1]  # Remove the last blank line
 
     def _destructor(self):
         dtor = self.root.find("Destructor[@context='%s']" % self.node.attrib["id"])
