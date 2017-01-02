@@ -5,6 +5,7 @@ import importlib
 import os
 import sys
 import thread
+import time
 import traceback
 import xml.etree.ElementTree as ET
 
@@ -13,6 +14,7 @@ import newevent
 # noinspection PyUnresolvedReferences
 import wx
 
+import Logger
 import ProjectBase
 import Registry
 import Session
@@ -48,8 +50,9 @@ class MyRedirector(object):
         if not isinstance(msg, unicode):
             msg = msg.decode()
 
-        event = ProgressEvent(message=msg)
-        wx.PostEvent(self.target, event)
+        if msg:
+            event = ProgressEvent(message=msg)
+            wx.PostEvent(self.target, event)
 
     def flush(self):
         pass
@@ -120,6 +123,9 @@ class MainWindow(wx.Frame):
         self.fill_header_list()
         wx.PyBind(self, wx.EVT_LIST_ITEM_CHECKED, self.on_enable_header)
         wx.PyBind(self, wx.EVT_LIST_ITEM_UNCHECKED, self.on_enable_header)
+
+        self.logger = Logger.ListBoxLogger(self.logger)
+        wx.PyBind(self.logger.logger_ctrl, wx.EVT_KEY_DOWN, self.on_logger_key_down)
 
         wx.PyBind(self, EVT_PROGRESS, self.on_progress)
         wx.PyBind(self, EVT_WORKER_FIN, self.on_worker_finished)
@@ -395,7 +401,7 @@ class MainWindow(wx.Frame):
         if is_path(self.mod_proj.castxml_bin):
             if not os.path.exists(self.mod_proj.castxml_bin):
                 fmt = u"Path to CastXML not valid:\n    %s\n"
-                self.logger.AppendText(fmt % self.mod_proj.castxml_bin)
+                self.logger.append(fmt % self.mod_proj.castxml_bin)
 
                 return False
 
@@ -426,7 +432,7 @@ class MainWindow(wx.Frame):
             self.batch_castxml_tasks.append(header)
 
         if self.do_batch_castxml_tasks():
-            self.logger.Clear()
+            self.logger.clear()
             self.enable_console(False)
 
     def do_batch_castxml_tasks(self):
@@ -439,19 +445,19 @@ class MainWindow(wx.Frame):
     def on_castxml(self, event):
         path = self.get_selected_header()
         if not path:
-            self.logger.SetValue(u"Please select one header first.")
+            self.logger.set(u"Please select one header first.")
             return
 
         if self.invoke_castxml(path):
-            self.logger.Clear()
+            self.logger.clear()
             self.enable_console(False)
 
     def on_castxml_done(self, event):
         if self.process.IsInputAvailable():
-            self.logger.AppendText(self.process.GetInputStream().Read())
+            self.logger.append(self.process.GetInputStream().Read())
 
         if self.process.IsErrorAvailable():
-            self.logger.AppendText(self.process.GetErrorStream().Read())
+            self.logger.append(self.process.GetErrorStream().Read())
 
         self.process = None
 
@@ -464,7 +470,7 @@ class MainWindow(wx.Frame):
             worker = Worker(self, self.on_compress, self.on_compression_done)
             worker.start()
         else:
-            self.logger.AppendText(u"Error parsing `%s`.\n" % self.hanging_header)
+            self.logger.append(u"Error parsing `%s`.\n" % self.hanging_header)
             self.on_compression_done()
 
     def on_compress(self):
@@ -487,8 +493,7 @@ class MainWindow(wx.Frame):
             self.do_batch_castxml_tasks()
         else:
             self.enable_console(True)
-
-            self.logger.AppendText(u"\nDone.")
+            self.logger.append(u"\nDone.")
 
     def ask(self, msg):
         answer = wx.MessageBox(u"Are you sure?\n" + msg, u"Confirm",
@@ -535,7 +540,7 @@ class MainWindow(wx.Frame):
         if not self.ask(self.TIME_CONSUMING):
             return
 
-        self.logger.Clear()
+        self.logger.clear()
         self.enable_console(False)
 
         w = Worker(self, self.do_reparse_all_headers)
@@ -543,6 +548,7 @@ class MainWindow(wx.Frame):
 
     def do_reparse_all_headers(self):
         self.current = self.mod_proj.Project()
+        time_begin = time.time()
 
         with RedirectStdStreams(self.redirector, self.redirector):
             for header in self.enabled():
@@ -558,16 +564,18 @@ class MainWindow(wx.Frame):
             if self.print_ignored:
                 print_and_clear_ignored_symbols_registry()
 
+            print(u"\n(Time elapsed: %gs)" % (time.time() - time_begin))
+
     def on_enable_header(self, event):
         self.serialize()
 
     def on_reparse_header(self, event):
         if self.get_selected_header_index() == -1:
-            self.logger.SetValue(u"Please select one header first.\n\n")
+            self.logger.set(u"Please select one header first.")
             return
 
         self.enable_console(False)
-        self.logger.Clear()
+        self.logger.clear()
 
         w = Worker(self, self.do_reparse_header)
         w.start()
@@ -582,7 +590,7 @@ class MainWindow(wx.Frame):
                 print_and_clear_ignored_symbols_registry()
 
     def on_rewrite_all_output_files(self, event):
-        self.logger.Clear()
+        self.logger.clear()
         self.enable_console(False)
 
         w = Worker(self, self.do_rewrite_all_output_files)
@@ -601,7 +609,7 @@ class MainWindow(wx.Frame):
             traceback.print_exc()
             return
 
-        if not self.logger.IsEmpty():
+        if not self.logger.is_empty():
             print(u"")
 
         print(u"Writing to disk...")
@@ -611,35 +619,43 @@ class MainWindow(wx.Frame):
 
         print(u"\nDONE.")
 
-    def on_progress(self, event):
-        self.logger.AppendText(event.message)
-        self.logger.SetInsertionPointEnd()
-
     def on_worker_finished(self, event):
         if event.done_listener:
             event.done_listener()
         else:
             self.enable_console(True)
 
+    def on_progress(self, event):
+        self.logger.append(event.message)
+        self.logger.go_to_end()
+
+    def on_logger_key_down(self, event):
+        if event.ControlDown():
+            if event.GetKeyCode() == ord('A'):
+                self.logger.select_all()
+            elif event.GetKeyCode() == ord('C'):
+                logs = self.logger.get_selections()
+                print(logs)
+
     def on_locate_xml(self, event):
         header_path = self.get_selected_header()
         if not header_path:
-            self.logger.SetValue(u"Please select one header first.\n\n")
+            self.logger.set(u"Please select one header first.")
             return
 
         xml_path = self.xml_path(header_path)
 
         if os.path.exists(xml_path):
-            self.logger.SetValue(xml_path)
+            self.logger.set(xml_path)
         else:
-            self.logger.SetValue(u"Not found.")
+            self.logger.set(u"Not found.")
 
     # noinspection PyProtectedMember
     def on_stats(self, event):
         for cls in sorted(Registry._registry.values()):
-            self.logger.AppendText(cls.full_name + u"\n")
+            self.logger.append(cls.full_name + u"\n")
 
-        self.logger.AppendText(u"\n# of classes: %d" % len(Registry._registry))
+        self.logger.append(u"\n# of classes: %d" % len(Registry._registry))
 
     def on_save(self, event):
         self.save()
@@ -652,7 +668,7 @@ class MainWindow(wx.Frame):
         assert not self.is_header_list_empty()
 
         self.enable_console(False)
-        self.logger.Clear()
+        self.logger.clear()
 
         w = Worker(self, self.do_start)
         w.start()

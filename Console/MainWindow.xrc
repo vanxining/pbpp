@@ -127,9 +127,9 @@
 				<option>1</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxTextCtrl" name="logger">
-					<style>wxTE_MULTILINE|wxTE_READONLY</style>
-					<value></value>
+				<object class="wxListBox" name="logger">
+					<style>wxLB_EXTENDED</style>
+					<content />
 				</object>
 			</object>
 			<object class="sizeritem">
