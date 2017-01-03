@@ -98,7 +98,7 @@ class MainWindow(wx.Frame):
                 self.current = self.mod_proj.Project()
 
         self.process = None
-        wx.PyBind(self, wx.EVT_END_PROCESS, self.on_castxml_done)
+        self.Bind(wx.EVT_END_PROCESS, self.on_castxml_done)
 
         self.batch_castxml_tasks = []
         self.hanging_header = ""
@@ -106,21 +106,21 @@ class MainWindow(wx.Frame):
         self.redirector = MyRedirector(self)
 
         self.DragAcceptFiles(accept=True)
-        wx.PyBind(self, wx.EVT_DROP_FILES, self.on_files_dropped)
+        self.Bind(wx.EVT_DROP_FILES, self.on_files_dropped)
 
         self.fill_header_list()
-        wx.PyBind(self, wx.EVT_LIST_ITEM_CHECKED, self.on_enable_header)
-        wx.PyBind(self, wx.EVT_LIST_ITEM_UNCHECKED, self.on_enable_header)
+        self.Bind(wx.EVT_LIST_ITEM_CHECKED, self.on_enable_header)
+        self.Bind(wx.EVT_LIST_ITEM_UNCHECKED, self.on_enable_header)
 
         self.prepare_logger()
 
-        wx.PyBind(self, EVT_PROGRESS, self.on_progress)
-        wx.PyBind(self, EVT_WORKER_FIN, self.on_worker_finished)
+        self.Bind(EVT_PROGRESS, self.on_progress)
+        self.Bind(EVT_WORKER_FIN, self.on_worker_finished)
 
         self.timer = wx.Timer(self)
-        wx.PyBind(self, wx.EVT_TIMER, self.on_timer, self.timer.GetId())
+        self.Bind(wx.EVT_TIMER, self.on_timer, self.timer.GetId())
 
-        wx.PyBind(self, wx.EVT_CLOSE_WINDOW, self.on_close)
+        self.Bind(wx.EVT_CLOSE_WINDOW, self.on_close)
 
     def __del__(self):
         if self.process is not None:
@@ -173,11 +173,11 @@ class MainWindow(wx.Frame):
             if event_type != 0:
                 handler = getattr(self, "on_" + name, None)
                 if handler is not None:
-                    wx.PyBind(target, event_type, handler, xid)
+                    target.Bind(event_type, handler, xid)
 
     def prepare_logger(self):
         self.logger = Logger.ListBoxLogger(self.logger)
-        wx.PyBind(self.logger.logger_ctrl, wx.EVT_KEY_DOWN, self.on_logger_key_down)
+        self.logger.logger_ctrl.Bind(wx.EVT_KEY_DOWN, self.on_logger_key_down)
 
         logging.basicConfig(level=Settings.logging_level,
                             format="[%(levelname)s] %(message)s",
