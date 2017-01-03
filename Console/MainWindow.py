@@ -352,15 +352,26 @@ class MainWindow(wx.Frame):
     def is_header_list_empty(self):
         return self.header_list.GetItemCount() == 0
 
+    def header_exists(self, header):
+        for index in range(self.header_list.GetItemCount()):
+            if header == self.header_list.GetItemText(index):
+                return True
+
+        return False
+
     def on_files_dropped(self, event):
         index = self.header_list.GetItemCount()
+        added = False
 
         for f in event.GetFiles():
-            self.header_list.InsertItem(index, f)
-            self.header_list.CheckItem(index, True)
-            index += 1
+            if not self.header_exists(f):
+                self.header_list.InsertItem(index, f)
+                self.header_list.CheckItem(index, True)
 
-        if index > 0:
+                index += 1
+                added = True
+
+        if index > 0 and added:
             self.set_selected_header(index - 1)
             self.header_list.EnsureVisible(index - 1)
 
@@ -371,7 +382,7 @@ class MainWindow(wx.Frame):
 
     def select_and_insert(self, pos):
         path = self.select_file()
-        if path:
+        if path and not self.header_exists(path):
             self.header_list.InsertItem(pos, path)
             self.header_list.CheckItem(pos, True)
 
