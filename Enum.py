@@ -38,7 +38,7 @@ class Enum(object):
 
                 for v in enum.findall("EnumValue"):
                     name = v.attrib["name"]
-                    cppv = "static_cast<int>(%s::%s)" % (se.full_name, name)
+                    cppv = "%s::%s" % (se.full_name, name)
                     se.values[namer.to_python(name)] = cppv
 
                 self.scoped_enums[se.name] = se
