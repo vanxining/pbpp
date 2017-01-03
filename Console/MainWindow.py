@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import ConfigParser
 import importlib
 import logging
 import os
@@ -20,6 +19,8 @@ import ProjectBase
 import Registry
 import Session
 import Xml
+
+import Settings
 
 
 (ProgressEvent, EVT_PROGRESS) = newevent.NewEvent()
@@ -81,15 +82,10 @@ class MainWindow(wx.Frame):
 
         self.SetIcon(wx.Icon(u"Icon.ico", wx.BITMAP_TYPE_ICO))
 
-        self.config = ConfigParser.RawConfigParser()
-        self.config.read("Settings.ini")
-        self.proj_dir = self.config.get("Default", "proj")
-        self.print_ignored = self.config.getboolean("Default", "print_ignored")
+        if not os.path.isdir(Settings.proj):
+            raise RuntimeError("Not a PyBridge++ project directory: `%s`" % Settings.proj)
 
-        if not os.path.isdir(self.proj_dir):
-            raise RuntimeError("Not a PyBridge++ project directory: `%s`" % self.proj_dir)
-
-        sys.path.append(os.path.abspath(self.proj_dir))
+        sys.path.append(os.path.abspath(Settings.proj))
         self.mod_proj = importlib.import_module("Project")
 
         self.current = self.mod_proj.Project()
@@ -181,26 +177,19 @@ class MainWindow(wx.Frame):
         self.logger = Logger.ListBoxLogger(self.logger)
         wx.PyBind(self.logger.logger_ctrl, wx.EVT_KEY_DOWN, self.on_logger_key_down)
 
-        logging_level = self.config.get("Default", "logging_level")
-        if logging_level and hasattr(logging, logging_level):
-            logging_level = getattr(logging, logging_level)
-        else:
-            sys.stderr.write("Invalid logging level: %s\n" % logging_level)
-            logging_level = logging.INFO
-
-        logging.basicConfig(level=logging_level,
+        logging.basicConfig(level=Settings.logging_level,
                             format="[%(levelname)s] %(message)s",
                             stream=MyRedirector(self))
 
     def current_proj(self):
-        return self.proj_dir + "/Current.pbpp"
+        return Settings.proj + "/Current.pbpp"
 
     def stable_proj(self):
-        return self.proj_dir + "/Stable.pbpp"
+        return Settings.proj + "/Stable.pbpp"
 
     def xml_path(self, header_path):
         name = self.current.xml_file_canonical_name(header_path)
-        return os.path.realpath("%s/Xml/%s.xml" % (self.proj_dir, name))
+        return os.path.realpath("%s/Xml/%s.xml" % (Settings.proj, name))
 
     def redirect_header(self, header_path):
         path = header_path
@@ -223,7 +212,7 @@ class MainWindow(wx.Frame):
         self.header_list.InsertColumn(0, u"Headers", width=w)
 
         index = 0
-        for header in open(self.proj_dir + "/Headers.lst"):
+        for header in open(Settings.proj + "/Headers.lst"):
             header = header.strip()
             if header:
                 disabled = False
@@ -238,7 +227,7 @@ class MainWindow(wx.Frame):
                 index += 1
 
     def serialize(self):
-        with open(self.proj_dir + "/Headers.lst", "w") as outf:
+        with open(Settings.proj + "/Headers.lst", "w") as outf:
             for index in range(self.header_list.GetItemCount()):
                 header = self.header_list.GetItemText(index).encode("utf-8")
                 if not self.header_list.IsItemChecked(index):
@@ -563,7 +552,7 @@ class MainWindow(wx.Frame):
 
         self.finish_and_write_back()
 
-        if self.print_ignored:
+        if Settings.print_ignored:
             print_and_clear_ignored_symbols_registry()
 
         logging.info(u"")
@@ -588,7 +577,7 @@ class MainWindow(wx.Frame):
         self.parse_header(self.get_selected_header())
         self.finish_and_write_back()
 
-        if self.print_ignored:
+        if Settings.print_ignored:
             print_and_clear_ignored_symbols_registry()
 
     def on_rewrite_all_output_files(self, event):
@@ -694,5 +683,5 @@ class MainWindow(wx.Frame):
 
         self.finish_and_write_back()
 
-        if self.print_ignored:
+        if Settings.print_ignored:
             print_and_clear_ignored_symbols_registry()

@@ -7,7 +7,7 @@
 *.pyc
 *.swp
 
-*.ini
+Settings.py
 
 *.lnk
 Thumbs.db
