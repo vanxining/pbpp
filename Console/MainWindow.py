@@ -72,7 +72,8 @@ def print_and_clear_ignored_symbols_registry():
 
 # noinspection PyBroadException,PyUnusedLocal,PyMethodMayBeStatic,PyAttributeOutsideInit
 class MainWindow(wx.Frame):
-    TIME_CONSUMING = "This may take minutes!"
+    SELECT_ONE_HEADER = u"Please select one header first"
+    TIME_CONSUMING = u"This may take minutes!"
 
     def __init__(self):
         wx.Frame.__init__(self)
@@ -294,7 +295,7 @@ class MainWindow(wx.Frame):
         event.Skip(True)
 
     def on_about(self, event):
-        wx.MessageBox(u"~~(*∩_∩*)~~", u"About",
+        wx.MessageBox(u"~~(*^_^*)~~", u"About",
                       wx.OK | wx.ICON_INFORMATION,
                       self)
 
@@ -386,6 +387,8 @@ class MainWindow(wx.Frame):
                 self.header_list.SetFocus()
 
                 self.serialize()
+        else:
+            self.make_toast(self.SELECT_ONE_HEADER)
 
     def on_enable_all_headers(self, event):
         self.do_enable_all_headers(True)
@@ -453,7 +456,7 @@ class MainWindow(wx.Frame):
     def on_castxml(self, event):
         path = self.get_selected_header()
         if not path:
-            self.logger.set(u"Please select one header first")
+            self.make_toast(self.SELECT_ONE_HEADER)
             return
 
         if self.invoke_castxml(path):
@@ -578,7 +581,7 @@ class MainWindow(wx.Frame):
 
     def on_reparse_header(self, event):
         if self.get_selected_header_index() == -1:
-            self.logger.set(u"Please select one header first")
+            self.make_toast(self.SELECT_ONE_HEADER)
             return
 
         self.enable_console(False)
@@ -645,7 +648,7 @@ class MainWindow(wx.Frame):
     def on_locate_xml(self, event):
         header_path = self.get_selected_header()
         if not header_path:
-            self.logger.set(u"Please select one header first")
+            self.make_toast(self.SELECT_ONE_HEADER)
             return
 
         xml_path = self.xml_path(header_path)
@@ -653,7 +656,7 @@ class MainWindow(wx.Frame):
         if os.path.exists(xml_path):
             self.logger.set(xml_path)
         else:
-            self.logger.set(u"Not found")
+            self.make_toast(u"XML not found")
 
     # noinspection PyProtectedMember
     def on_stats(self, event):

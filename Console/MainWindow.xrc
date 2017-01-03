@@ -232,7 +232,7 @@
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="open_debug_logs_file_mi">
-					<label>_Open debug logs file</label>
+					<label>Open _debug logs file</label>
 					<help></help>
 				</object>
 				<object class="separator" />
