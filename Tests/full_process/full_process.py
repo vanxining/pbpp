@@ -1,6 +1,7 @@
 import importlib
 import os
 import subprocess
+import sys
 import tempfile
 
 import config
@@ -100,12 +101,14 @@ def _clean():
 def _print_header(package_name):
     msg = "Testing %s... (full process)" % package_name
 
+    print("\n\n")
+
     from logging import debug
-    debug("\n\n")
     debug('*' * len(msg))
     debug(msg)
     debug('*' * len(msg))
-    debug("\n\n")
+
+    print("\n\n")
 
 
 def run(tc_dir):
@@ -126,11 +129,14 @@ def run(tc_dir):
         _create_makefile(package_name)
         _build()
 
-        os.chdir(tmp_dir + package_name)
+        sys.path.insert(0, tmp_dir + package_name)
         m = _import(package_name)
     except:
         raise
     finally:
+        if sys.path and sys.path[0] == tmp_dir + package_name:
+            sys.path = sys.path[1:]
+
         _clean()
         os.chdir(owd)
 
