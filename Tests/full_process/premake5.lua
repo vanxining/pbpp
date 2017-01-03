@@ -13,7 +13,7 @@ workspace(_OPTIONS["targetname"])
 
     project(_OPTIONS["targetname"])
         kind "SharedLib"
-        targetdir(_OPTIONS["targetname"])
+        targetdir(".")
         targetname(_OPTIONS["targetname"])
 
         files { "*.cxx", "*.cpp" }

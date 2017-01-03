@@ -12,135 +12,140 @@ from ... import Util
 from ... import Xml
 
 
-tmp_dir = tempfile.gettempdir() + os.path.sep + "pbpp" + os.path.sep
-
-
 def _execute(cmd):
     return subprocess.call(cmd, shell=True)
 
 
-def _set_up(tc_dir):
-    if not os.path.exists(tmp_dir) or not os.path.isdir(tmp_dir):
-        os.mkdir(tmp_dir)
+# noinspection PyMethodMayBeStatic
+class _TestCase(object):
+    def __init__(self, tc_dir):
+        assert tc_dir[-1] == os.path.sep
 
-    Util.smart_copy(tc_dir + "def.hpp", tmp_dir + "def.hpp")
-    for f in os.listdir(tc_dir):
-        if f.endswith(".cpp"):
-            Util.smart_copy(tc_dir + f, tmp_dir + f)
+        self.tc_dir = tc_dir
+        self.package_name = tc_dir[(tc_dir[:-1].rindex(os.path.sep) + 1):-1]
+        self.tmp_dir = "{0}{1}pbpp{1}{2}{1}".format(
+            tempfile.gettempdir(),
+            os.path.sep,
+            self.package_name
+        )
 
-    Util.smart_copy(tc_dir + "../premake5.lua", tmp_dir + "premake5.lua")
+    def _set_up(self):
+        if not os.path.exists(self.tmp_dir) or not os.path.isdir(self.tmp_dir):
+            os.makedirs(self.tmp_dir)
 
-    return tmp_dir + "def.hpp"
+        Util.smart_copy(self.tc_dir + "def.hpp", self.tmp_dir + "def.hpp")
+        for f in os.listdir(self.tc_dir):
+            if f.endswith(".cpp"):
+                Util.smart_copy(self.tc_dir + f, self.tmp_dir + f)
 
+        Util.smart_copy(self.tc_dir + "../premake5.lua", self.tmp_dir + "premake5.lua")
 
-def _run_castxml(fcpp):
-    xml_path = tmp_dir + os.path.basename(fcpp) + ".xml"
-    cmd = '%s %s -o "%s" "%s"' % (
-        config.castxml_bin,
-        config.castxml_args,
-        xml_path,
-        fcpp,
-    )
+        return self.tmp_dir + "def.hpp"
 
-    rc = _execute(cmd)
-    assert rc == 0
+    def _run_castxml(self, fcpp):
+        xml_path = self.tmp_dir + os.path.basename(fcpp) + ".xml"
+        cmd = '"%s" %s -o "%s" "%s"' % (
+            config.castxml_bin,
+            config.castxml_args,
+            xml_path,
+            fcpp,
+        )
 
-    return xml_path
+        rc = _execute(cmd)
+        assert rc == 0
+        assert os.path.exists(xml_path)
 
+        return xml_path
 
-def _compress(fcpp, fxml):
-    c = Xml.Compressor()
-    c.compress((fcpp,), fxml, fxml)
+    def _compress(self, fcpp, fxml):
+        c = Xml.Compressor()
+        c.compress((fcpp,), fxml, fxml)
 
+    def _generate(self, fxml):
+        try:
+            m = Module.Module(self.package_name, None,
+                              customizer.namer(self.package_name),
+                              customizer.header_provider(),
+                              customizer.flags_assigner(),
+                              customizer.blacklist())
 
-def _generate(package_name, fxml):
-    try:
-        m = Module.Module(package_name, None,
-                          customizer.namer(package_name),
-                          customizer.header_provider(),
-                          customizer.flags_assigner(),
-                          customizer.blacklist())
+            Module.process_header(m, ("def.hpp",), fxml)
 
-        Module.process_header(m, ("def.hpp",), fxml)
+            m.finish_processing()
+            m.generate(self.tmp_dir, ext=".cxx")
+        except:
+            raise
+        finally:
+            # Clear all saved classes
+            Registry.clear()
 
-        m.finish_processing()
-        m.generate(tmp_dir, ext=".cxx")
-    except:
-        raise
-    finally:
-        # Clear all saved classes.
-        Registry.clear()
+    def _create_makefile(self):
+        rc = _execute('"%s" gmake --targetname="%s" --pyroot="%s"' % (
+            config.premake_bin, self.package_name, config.pyroot
+        ))
+        assert rc == 0
 
+    def _build(self):
+        rc = _execute(config.make)
+        assert rc == 0
 
-def _create_makefile(package_name):
-    rc = _execute('"%s" gmake --targetname="%s" --pyroot="%s"' % (
-        config.premake_bin, package_name, config.pyroot
-    ))
-    assert rc == 0
+    def _import(self):
+        return importlib.import_module(self.package_name)
 
+    def _clean(self):
+        obj_file = self.tmp_dir + "obj" + os.path.sep + "def.o"
+        if os.path.exists(obj_file):
+            os.remove(obj_file)
 
-def _build():
-    rc = _execute(config.make)
-    assert rc == 0
+        if os.path.isdir(self.tmp_dir):
+            for f in os.listdir(self.tmp_dir):
+                if f.endswith(".py.cxx") or f.endswith(".cpp"):
+                    os.remove(self.tmp_dir + f)
 
+    def _print_header(self):
+        msg = "Testing %s... (full process)" % self.package_name
 
-def _import(package_name):
-    return importlib.import_module(package_name)
+        print("\n\n")
 
+        from logging import debug
+        debug('*' * len(msg))
+        debug(msg)
+        debug('*' * len(msg))
 
-def _clean():
-    obj_file = tmp_dir + "obj" + os.path.sep + "def.o"
-    if os.path.exists(obj_file):
-        os.remove(obj_file)
+        print("\n\n")
 
-    for f in os.listdir(tmp_dir):
-        if f.endswith(".py.cxx") or f.endswith(".cpp"):
-            os.remove(tmp_dir + f)
+    def run(self):
+        self._print_header()
+        self._clean()
 
+        owd = os.getcwd()
 
-def _print_header(package_name):
-    msg = "Testing %s... (full process)" % package_name
+        try:
+            fcpp = self._set_up()
+            fxml = self._run_castxml(fcpp)
+            self._compress(fcpp, fxml)
+            self._generate(fxml)
 
-    print("\n\n")
+            os.chdir(self.tmp_dir)
+            self._create_makefile()
+            self._build()
 
-    from logging import debug
-    debug('*' * len(msg))
-    debug(msg)
-    debug('*' * len(msg))
+            sys.path.insert(0, self.tmp_dir)
+            m = self._import()
+        except:
+            raise
+        finally:
+            if sys.path and sys.path[0] == self.tmp_dir:
+                sys.path = sys.path[1:]
 
-    print("\n\n")
+            os.chdir(owd)
+
+        return m
 
 
 def run(tc_dir):
-    assert tc_dir[-1] == os.path.sep
-    package_name = tc_dir[(tc_dir[:-1].rindex(os.path.sep) + 1):-1]
-
-    _print_header(package_name)
-
-    owd = os.getcwd()
-
-    try:
-        fcpp = _set_up(tc_dir)
-        fxml = _run_castxml(fcpp)
-        _compress(fcpp, fxml)
-        _generate(package_name, fxml)
-
-        os.chdir(tmp_dir)
-        _create_makefile(package_name)
-        _build()
-
-        sys.path.insert(0, tmp_dir + package_name)
-        m = _import(package_name)
-    except:
-        raise
-    finally:
-        if sys.path and sys.path[0] == tmp_dir + package_name:
-            sys.path = sys.path[1:]
-
-        _clean()
-        os.chdir(owd)
-
-    return m
+    test_case = _TestCase(tc_dir)
+    return test_case.run()
 
 
 def run2(tc_file):
