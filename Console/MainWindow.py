@@ -438,7 +438,7 @@ class MainWindow(wx.Frame):
             self.redirect_header(header_path),
         )
 
-        print(cmd)
+        logging.debug(cmd)
 
         self.hanging_header = header_path
         self.hanging_xml = xml_path
