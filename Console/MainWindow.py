@@ -181,11 +181,26 @@ class MainWindow(wx.Frame):
                             format="[%(levelname)s] %(message)s",
                             stream=MyRedirector(self))
 
+        if Settings.log_debug:
+            file_handler = logging.FileHandler(filename=self.log_file_path(),
+                                               mode='w',
+                                               delay=True)
+
+            file_handler.setLevel(logging.NOTSET)
+            formatter = logging.Formatter(fmt="%(asctime)s [%(levelname)s] %(message)s",
+                                          datefmt="%m-%d %H:%M")
+            file_handler.setFormatter(formatter)
+
+            logging.getLogger().addHandler(file_handler)
+
     def current_proj(self):
         return Settings.proj + "/Current.pbpp"
 
     def stable_proj(self):
         return Settings.proj + "/Stable.pbpp"
+
+    def log_file_path(self):
+        return Settings.proj + "/Logs.log"
 
     def xml_path(self, header_path):
         name = self.current.xml_file_canonical_name(header_path)
@@ -649,6 +664,12 @@ class MainWindow(wx.Frame):
 
         self.logger.append(u"\n# of classes: %d" % len(Registry._registry))
         self.logger.go_to_end()
+
+    def on_open_debug_logs_file(self, event):
+        if os.path.isfile(self.log_file_path()):
+            wx.LaunchDefaultApplication(self.log_file_path().decode())
+        else:
+            self.make_toast(u"Debug logs file does not exist")
 
     def on_save(self, event):
         self.save()

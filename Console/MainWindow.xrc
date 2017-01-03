@@ -231,6 +231,11 @@
 					<help></help>
 				</object>
 				<object class="separator" />
+				<object class="wxMenuItem" name="open_debug_logs_file_mi">
+					<label>_Open debug logs file</label>
+					<help></help>
+				</object>
+				<object class="separator" />
 				<object class="wxMenuItem" name="save_as_stable_mi">
 					<label>Save as sta_ble</label>
 					<help></help>
