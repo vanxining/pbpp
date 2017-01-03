@@ -412,11 +412,14 @@ class MainWindow(wx.Frame):
         if is_path(self.mod_proj.castxml_bin):
             if not os.path.exists(self.mod_proj.castxml_bin):
                 fmt = u"Path to CastXML binary not valid:\n    %s\n"
-                self.logger.append(fmt % self.mod_proj.castxml_bin)
+                logging.error(fmt % self.mod_proj.castxml_bin)
 
                 return False
 
         xml_path = self.xml_path(header_path)
+        if os.path.exists(xml_path):
+            os.remove(xml_path)
+
         cmd = u'"%s" %s -o "%s" "%s"' % (
             self.mod_proj.castxml_bin,
             self.mod_proj.castxml_args(header_path), xml_path,
@@ -465,10 +468,10 @@ class MainWindow(wx.Frame):
 
     def on_castxml_done(self, event):
         if self.process.IsInputAvailable():
-            self.logger.append(self.process.GetInputStream().Read())
+            logging.debug(self.process.GetInputStream().Read())
 
         if self.process.IsErrorAvailable():
-            self.logger.append(self.process.GetErrorStream().Read())
+            logging.error(self.process.GetErrorStream().Read())
 
         self.process = None
 
@@ -481,7 +484,7 @@ class MainWindow(wx.Frame):
             worker = Worker(self, self.on_compress, self.on_compression_done)
             worker.start()
         else:
-            self.logger.append(u"Failed to parse `%s`" % self.hanging_header)
+            logging.error(u"Failed to parse `%s`" % self.hanging_header)
             self.on_compression_done()
 
     def on_compress(self):
@@ -503,7 +506,6 @@ class MainWindow(wx.Frame):
             self.do_batch_castxml_tasks()
         else:
             self.enable_console(True)
-            logging.info(u"DONE")
 
     def ask(self, msg):
         answer = wx.MessageBox(u"Are you sure?\n" + msg, u"Confirm",
@@ -540,7 +542,12 @@ class MainWindow(wx.Frame):
             menu_bar.EnableTop(i, enabled)
 
     def parse_header(self, header):
-        xml_root = ET.parse(self.xml_path(header)).getroot()
+        xml_path = self.xml_path(header)
+        if not os.path.isfile(xml_path):
+            logging.error(u"No XML file found for `%s`", header)
+            return
+
+        xml_root = ET.parse(xml_path).getroot()
 
         for fnode in xml_root.findall("File"):
             self.current.root_mod.process_file(xml_root, fnode)
@@ -625,7 +632,7 @@ class MainWindow(wx.Frame):
             self.mod_proj.output_cxx_dir, self.mod_proj.output_cxx_ext
         )
 
-        logging.info(u"DONE")
+        logging.info(u"DONE.")
 
     def on_worker_finished(self, event):
         if event.done_listener:
