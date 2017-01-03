@@ -1,6 +1,7 @@
 import importlib
 import logging
 import os
+import time
 
 
 def smart_write(path, content, log=True):
@@ -113,3 +114,15 @@ def load2(name):
 
 def load(name):
     return load2(name)[0]
+
+
+class ElapsedTime(object):
+    def __init__(self, fmt=""):
+        self.fmt = fmt or "Time elapsed: %gs"
+        self.time_begin = 0.0
+
+    def __enter__(self):
+        self.time_begin = time.time()
+
+    def __exit__(self, exc_type, exc_value, tb):
+        logging.info(self.fmt, time.time() - self.time_begin)

@@ -5,7 +5,6 @@ import logging
 import os
 import sys
 import thread
-import time
 import traceback
 import xml.etree.ElementTree as ET
 
@@ -18,6 +17,7 @@ import Logger
 import ProjectBase
 import Registry
 import Session
+import Util
 import Xml
 
 import Settings
@@ -37,7 +37,8 @@ class Worker(object):
         thread.start_new_thread(self.run, ())
 
     def run(self):
-        self.runnable()
+        with Util.ElapsedTime():
+            self.runnable()
 
         event = WorkerFinishEvent()
         event.done_listener = self.done_listener
@@ -565,7 +566,6 @@ class MainWindow(wx.Frame):
 
     def do_reparse_all_headers(self):
         self.current = self.mod_proj.Project()
-        time_begin = time.time()
 
         for header in self.enabled():
             logging.info(u"Parsing `%s`...", header)
@@ -579,9 +579,6 @@ class MainWindow(wx.Frame):
 
         if Settings.print_ignored:
             print_and_clear_ignored_symbols_registry()
-
-        logging.info(u"")
-        logging.info(u"Time elapsed: %gs" % (time.time() - time_begin))
 
     def on_enable_header(self, event):
         self.serialize()
