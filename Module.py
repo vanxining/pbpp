@@ -153,11 +153,38 @@ class Blacklist(object):
     def __init__(self):
         pass
 
-    def hook_write(self, name, content):
-        return content
+    def namespace(self, ns):
+        return False
+
+    def klass(self, cls):
+        return False
+
+    def create_simple_dummy_class(self, cls):
+        return Class.Class.DummyDef(name=cls, full_name=cls)
+
+    def dummy_klass(self, cls):
+        return False
+
+    def base(self, full_name):
+        return False
+
+    def method(self, mname):
+        return False
+
+    def field(self, cls, f):
+        return False
 
     def return_type(self, ret):
         return False
+
+    def free_function(self, name):
+        return False
+
+    def global_constants(self, full_decl_map):
+        return False
+
+    def hook_write(self, name, content):
+        return content
 
 
 class Module(object):
