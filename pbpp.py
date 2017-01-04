@@ -47,13 +47,13 @@ def run_all_tests(args):
 
 def main():
     parser = argparse.ArgumentParser("pbpp")
-    subparsers = parser.add_subparsers(help="Subcommands to perform")
+    subparsers = parser.add_subparsers(help="subcommands to perform")
 
-    fp = subparsers.add_parser("fpt", help="Run full process unit test(s)")
+    fp = subparsers.add_parser("fpt", help="run full process unit test(s)")
     fp.set_defaults(func=fpt_action)
-    fp.add_argument("testcase", nargs='+', help="Normally the name of the directory containing `test.py`")
+    fp.add_argument("testcase", nargs='+', help="normally the name of the directory containing `test.py`")
 
-    test = subparsers.add_parser("test", help="Run all tests")
+    test = subparsers.add_parser("test", help="run all tests")
     test.set_defaults(func=run_all_tests)
 
     args = parser.parse_args()
