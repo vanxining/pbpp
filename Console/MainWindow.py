@@ -88,7 +88,7 @@ class MainWindow(wx.Frame):
         if not os.path.isdir(Settings.proj):
             raise RuntimeError("Not a PyBridge++ project directory: `%s`" % Settings.proj)
 
-        sys.path.append(os.path.abspath(Settings.proj))
+        sys.path.insert(0, os.path.abspath(Settings.proj))
         self.mod_proj = importlib.import_module("Project")
 
         self.current = self.mod_proj.Project()
@@ -446,6 +446,8 @@ class MainWindow(wx.Frame):
                 logging.error(e.output)
                 logging.exception(u"Failed to parse `%s`", header_path)
 
+        logging.info(u"Parsing `%s`...", header_path)
+
         worker = Worker(self, do_invoke_castxml, self.on_castxml_done)
         worker.start()
 
@@ -486,6 +488,8 @@ class MainWindow(wx.Frame):
         ProjectBase.remove_possible_temp_cpp_header(self.hanging_header)
 
         if os.path.exists(self.hanging_xml):
+            logging.info(u"Compressing XML output...")
+
             worker = Worker(self, self.on_compress, self.on_compression_done)
             worker.start()
         else:

@@ -17,7 +17,7 @@ def enable_logging():
                         datefmt="%m-%d %H:%M")
 
 
-def fpt_action(args):
+def run_full_process_tests(args):
     if not args:
         return
 
@@ -50,7 +50,7 @@ def main():
     subparsers = parser.add_subparsers(help="subcommands to perform")
 
     fp = subparsers.add_parser("fpt", help="run full process unit test(s)")
-    fp.set_defaults(func=fpt_action)
+    fp.set_defaults(func=run_full_process_tests)
     fp.add_argument("testcase", nargs='+', help="normally the name of the directory containing `test.py`")
 
     test = subparsers.add_parser("test", help="run all tests")
