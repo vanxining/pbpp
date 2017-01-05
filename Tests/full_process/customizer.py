@@ -23,12 +23,6 @@ class HeaderProvider(Module.HeaderProvider):
     def module(self, name):
         return "def.hpp",
 
-    def normalize(self, full_path):
-        return os.path.split(full_path)[1]
-
-    def pch(self):
-        return ""
-
 
 class FlagsAssigner(Module.FlagsAssigner):
     def assign(self, cls_name):
@@ -43,8 +37,6 @@ class Blacklist(Module.Blacklist):
         "PyObject",
         "_PySelf",
     }
-
-    dummy_classes = {}
 
     _base_patterns = []
 
@@ -79,13 +71,6 @@ class Blacklist(Module.Blacklist):
 
         return cls in self._classes
 
-    def dummy_klass(self, cls):
-        return cls in self.dummy_classes
-
-    def _simple_add_dummy_class(self, cls):
-        ddef = Class.Class.DummyDef(name=cls, full_name=cls)
-        self.dummy_classes[cls] = ddef
-
     def base(self, full_name):
         for pattern in self._base_patterns:
             if pattern.match(full_name):
@@ -118,8 +103,7 @@ class Blacklist(Module.Blacklist):
 
         return full_decl_map["FULL_NAME"] in self._global_constants
 
-    @staticmethod
-    def field(cls, f):
+    def field(self, cls, f):
         if f.startswith("m_") or f.startswith("sm_") or f.startswith("ms_"):
             return True
         else:

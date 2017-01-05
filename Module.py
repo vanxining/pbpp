@@ -127,13 +127,13 @@ class HeaderProvider(object):
         pass
 
     def klass(self, cls):
-        return []
+        return ()
 
     def module(self, name):
-        raise NotImplementedError()
+        return ()
 
     def normalize(self, full_path):
-        raise NotImplementedError()
+        return os.path.split(full_path)[1]
 
     def pch(self):
         return ""
@@ -151,7 +151,7 @@ class FlagsAssigner(object):
 # noinspection PyUnusedLocal,PyMethodMayBeStatic
 class Blacklist(object):
     def __init__(self):
-        pass
+        self.dummy_classes = {}
 
     def namespace(self, ns):
         return False
@@ -159,11 +159,9 @@ class Blacklist(object):
     def klass(self, cls):
         return False
 
-    def create_simple_dummy_class(self, cls):
-        return Class.Class.DummyDef(name=cls, full_name=cls)
-
-    def dummy_klass(self, cls):
-        return False
+    def add_simple_dummy_class(self, cls):
+        ddef = Class.DummyDef(name=cls, full_name=cls)
+        self.dummy_classes[cls] = ddef
 
     def base(self, full_name):
         return False
@@ -338,7 +336,7 @@ class Module(object):
                     Session.ignored_classes.add(full_name)
                     continue
 
-                if self.blacklist.dummy_klass(full_name):
+                if full_name in self.blacklist.dummy_classes:
                     Session.dummy_classes.add(full_name)
                     continue
 
@@ -499,14 +497,14 @@ class Module(object):
     def _create_dummy_wrappers(self):
         assert self.header_decl is None
 
-        myns = self._get_cxx_namespace()
+        namespace = self._get_cxx_namespace()
         down = False
 
         for ddef in self.blacklist.dummy_classes.values():
             if Registry.get_class(ddef.full_name):
                 continue
 
-            if ddef.namespace != myns:
+            if ddef.namespace != namespace:
                 down = True
                 continue
 

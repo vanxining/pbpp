@@ -21,17 +21,18 @@ LT_CXX = 1
 LT_BORROWED = 2
 
 
-class Class(object):
-    class DummyDef(object):
-        def __init__(self, **kwargs):
-            self.name = kwargs["name"]
-            self.full_name = kwargs["full_name"]
-            self.enum_class = kwargs.get("enum_class", False)
-            self.is_struct = kwargs.get("is_struct", False)
-            self.namespace = kwargs.get("namespace", "")
-            self.nester = kwargs.get("nester", "")
-            self.header = kwargs.get("header", None)
+class DummyDef(object):
+    def __init__(self, **kwargs):
+        self.name = kwargs["name"]
+        self.full_name = kwargs["full_name"]
+        self.enum_class = kwargs.get("enum_class", False)
+        self.is_struct = kwargs.get("is_struct", False)
+        self.namespace = kwargs.get("namespace", "")
+        self.nester = kwargs.get("nester", "")
+        self.header = kwargs.get("header", None)
 
+
+class Class(object):
     def __init__(self, root, node, module, dummy_def=None):
         assert node is not None or dummy_def is not None
 
@@ -142,14 +143,14 @@ class Class(object):
         assert isinstance(se, Enum.ScopedEnum)
         assert nester is None or isinstance(nester, Class)
 
-        dummy_def = Class.DummyDef(
+        ddef = DummyDef(
             name=se.name,
             full_name=se.full_name,
             enum_class=True,
             nester=nester.full_name if nester else None
         )
 
-        enum_class = Class(None, None, module, dummy_def)
+        enum_class = Class(None, None, module, ddef)
         enum_class.enums.values = se.values
 
         return enum_class
