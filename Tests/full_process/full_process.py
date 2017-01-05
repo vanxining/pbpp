@@ -5,7 +5,7 @@ import sys
 import tempfile
 
 import config
-import customizer
+import customizers
 from ... import Module
 from ... import Registry
 from ... import Util
@@ -64,10 +64,10 @@ class _TestCase(object):
     def _generate(self, fxml):
         try:
             m = Module.Module(self.package_name, None,
-                              customizer.namer(self.package_name),
-                              customizer.header_provider(),
-                              customizer.flags_assigner(),
-                              customizer.blacklist())
+                              customizers.namer(self.package_name),
+                              customizers.header_provider(),
+                              customizers.flags_assigner(),
+                              customizers.blacklist())
 
             Module.process_header(m, ("def.hpp",), fxml)
 

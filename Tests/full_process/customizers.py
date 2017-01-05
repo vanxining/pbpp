@@ -31,38 +31,46 @@ class FlagsAssigner(Module.FlagsAssigner):
 
 class Blacklist(Module.Blacklist):
 
-    _class_patterns = []
+    _namespace_patterns = ()
+    _namespaces = {
+        "std", "stdext", "__gnu_cxx",
+    }
 
+    _class_patterns = ()
     _classes = {
         "PyObject",
         "_PySelf",
     }
 
-    _base_patterns = []
-
+    _base_patterns = ()
     _bases = {
         "_PySelf",
     }
 
-    _namespaces = {
-        "std", "stdext", "__gnu_cxx",
-    }
+    _method_patterns = ()
+    _methods = ()
 
-    _method_patterns = []
+    _return_type_patterns = ()
+    _return_types = ()
 
-    _methods = {}
+    _free_function_patterns = ()
+    _free_functions = ()
 
-    _free_function_patterns = []
-    _free_functions = {}
+    _global_constants_patterns = ()
+    _global_constants = ()
 
-    _global_constants_patterns = []
-
-    _global_constants = {}
-
-    _fields = {}
+    _field_patterns = ()
+    _fields = ()
 
     def __init__(self):
         Module.Blacklist.__init__(self)
+
+    def namespace(self, ns):
+        for pattern in self._namespace_patterns:
+            if pattern.match(ns):
+                return True
+
+        return ns in self._namespaces
 
     def klass(self, cls):
         for pattern in self._class_patterns:
@@ -78,9 +86,6 @@ class Blacklist(Module.Blacklist):
 
         return full_name in self._bases
 
-    def namespace(self, ns):
-        return ns in self._namespaces
-
     def method(self, mname):
         for pattern in self._method_patterns:
             if pattern.match(mname):
@@ -95,6 +100,13 @@ class Blacklist(Module.Blacklist):
 
         return name in self._free_functions
 
+    def return_type(self, ret):
+        for pattern in self._return_type_patterns:
+            if pattern.match(ret):
+                return True
+
+        return ret in self._return_types
+
     def global_constants(self, full_decl_map):
         full_decl = "%s %s" % (full_decl_map["TYPE"], full_decl_map["FULL_NAME"])
         for pattern in self._global_constants_patterns:
@@ -106,8 +118,14 @@ class Blacklist(Module.Blacklist):
     def field(self, cls, f):
         if f.startswith("m_") or f.startswith("sm_") or f.startswith("ms_"):
             return True
-        else:
-            return False
+
+        decl = cls + "::" + f
+
+        for pattern in self._field_patterns:
+            if pattern.match(decl):
+                return True
+
+        return decl in self._fields
 
 
 class ClassChanger(object):

@@ -1,20 +1,20 @@
 import unittest
 
-from .. import customizer
+from .. import customizers
 from .. import full_process
 
 
-class Blacklist(customizer.Blacklist):
+class Blacklist(customizers.Blacklist):
     def global_constants(self, full_decl_map):
         if full_decl_map["FULL_NAME"] == "g_dp":
             return True
 
-        return customizer.Blacklist.global_constants(self, full_decl_map)
+        return customizers.Blacklist.global_constants(self, full_decl_map)
 
 
 class TestBlacklist(unittest.TestCase):
     def runTest(self):
-        with customizer.ClassChanger(Blacklist):
+        with customizers.ClassChanger(Blacklist):
             m = full_process.run2(__file__)
 
             self.assertFalse(m.g_invalid)
