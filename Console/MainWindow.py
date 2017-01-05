@@ -3,6 +3,7 @@
 import importlib
 import logging
 import os
+import subprocess
 import sys
 import thread
 import traceback
@@ -97,9 +98,6 @@ class MainWindow(wx.Frame):
                 os.remove(self.current_proj())
                 self.current = self.mod_proj.Project()
 
-        self.process = None
-        self.Bind(wx.EVT_END_PROCESS, self.on_castxml_done)
-
         self.batch_castxml_tasks = []
         self.hanging_header = ""
         self.hanging_xml = ""
@@ -121,12 +119,6 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_TIMER, self.on_timer, self.timer.GetId())
 
         self.Bind(wx.EVT_CLOSE_WINDOW, self.on_close)
-
-    def __del__(self):
-        if self.process is not None:
-            self.process.Detach()
-            self.process.CloseOutput()
-            self.process = None
 
     def xrc_load_frame(self):
         res = wx.XmlResource.Get()
@@ -181,7 +173,7 @@ class MainWindow(wx.Frame):
 
         logging.basicConfig(level=Settings.logging_level,
                             format="[%(levelname)s] %(message)s",
-                            stream=MyRedirector(self))
+                            stream=self.redirector)
 
         if Settings.log_debug:
             file_handler = logging.FileHandler(filename=self.log_file_path(),
@@ -443,10 +435,19 @@ class MainWindow(wx.Frame):
         self.hanging_header = header_path
         self.hanging_xml = xml_path
 
-        self.process = wx.Process(self)
-        self.process.Redirect()
+        def do_invoke_castxml():
+            try:
+                result = subprocess.check_output(cmd,
+                                                 shell=True,
+                                                 stderr=subprocess.STDOUT)
+                if result:
+                    logging.info(result)
+            except subprocess.CalledProcessError as e:
+                logging.error(e.output)
+                logging.exception(u"Failed to parse `%s`", header_path)
 
-        wx.Execute(cmd, wx.EXEC_ASYNC, self.process)
+        worker = Worker(self, do_invoke_castxml, self.on_castxml_done)
+        worker.start()
 
         return True
 
@@ -478,15 +479,7 @@ class MainWindow(wx.Frame):
             self.logger.clear()
             self.enable_console(False)
 
-    def on_castxml_done(self, event):
-        if self.process.IsInputAvailable():
-            logging.debug(self.process.GetInputStream().Read())
-
-        if self.process.IsErrorAvailable():
-            logging.error(self.process.GetErrorStream().Read())
-
-        self.process = None
-
+    def on_castxml_done(self):
         assert self.hanging_header and self.hanging_xml
 
         # Eliminate the temporary header
@@ -496,7 +489,6 @@ class MainWindow(wx.Frame):
             worker = Worker(self, self.on_compress, self.on_compression_done)
             worker.start()
         else:
-            logging.error(u"Failed to parse `%s`" % self.hanging_header)
             self.on_compression_done()
 
     def on_compress(self):
