@@ -2,13 +2,9 @@
 1、确保 GCCXML 支持当前 GCC 版本。已测试 GCC 4.7 以及 4.8，GCC 4.9 似乎不支持；
 2、wxWidgets 的 GCC static library 版本；
 3、手动创建 Gen、Xml 文件夹；
-4、编译前应将 WXWIN_COMPATIBILITY_2_8 设为 0。VC 和 GCC 的配置都要改！
+4、编译前应将 WXWIN_COMPATIBILITY_2_8 设为 0。VC 和 GCC 的配置都要改，两者不是共用同一套配置
 
 
-
-PyObject 标准 layout
-√类型转换：wxString <==> str
-union
 函数指针：
     在文件头进行 typedef
     指向成员的指针
@@ -18,7 +14,7 @@ union
     typedef FP (Drawable::MSW::Color::*FPM2)() const;
     FP* SetFPM(FPM2);
 
-char 支持：
+char 支持：可以考虑接收一个 PyObject *，然后做相应的判断
 for (i = 0; i < NCCS; i++) {
     v = PyList_GetItem(cc, i);
 
@@ -33,25 +29,24 @@ for (i = 0; i < NCCS; i++) {
     }
 }
 
+
+×对所有类都使用同一个标准 PBPP_PyObject？似乎没有太大好处，需要大量的 reinterpret_cast
+√类型转换：wxString <==> str
+union
+×返回一个指针，实际是一个数组：无法做到自动推导，只能自定义相应的 Converter
 √对单独的 PyObject 转换到 C++ 类型
-返回一个指针，实际是一个数组
 ×Python C 改变字符串
-
 √XML 文件精简
-√模板类持久化，避免重复生成
-√不生成(屏蔽)某些基类
-
-×可否 Enable 一个 wxSizer、一个 wxMenuBar？
+×模板类持久化，避免重复生成：假如是指 List、Dict 中的相关模板代码，那不好做，意义似乎不大
+√不生成（屏蔽）某些基类
+×可否 Enable 一个 wxSizer、一个 wxMenuBar？遍历其所有直接子控件和菜单
 √在列表中启用、禁用某个头文件
 √按需包含 _Containers.hxx 头文件
 不需要写回时不要生成相应的 lambda 函数
-格式化模板声明（逗号、指针符、引用符）
 √reference field (不要生成 setter)
-√将 wxPyBind() 的常用版本提前【可以通过修改其raw_sig】
 添加一些标准函数：ReleaseOwnership() etc.
-PyModule_AddStringMacro
-PyModule_AddIntMacro
-直接用标准 PBPP_PyObject？
+×PyModule_AddStringMacro：实际也是新生成一个 Python 对象，性能并无提升
+×PyModule_AddIntMacro：同上
 ?不要生成默认的 FixBasePtr() ==> CastToBase()
 Weak Reference Support
 其他一些需要使用 PBPP_BEGIN_ALLOW_THREADS 的地方：
@@ -62,29 +57,27 @@ Weak Reference Support
 √支持保护构造函数
 √重新解析时对自由函数的处理，不能重复添加
 √支持“全部重写”
-分 schema 实现重命名冲突参数名
+×分 schema 实现重命名冲突参数名
 异常处理
+√将 wxPyBind() 的常用版本提前【可以通过修改其 raw_sig】
 去掉 wxPyBind 的重载
 wxPyUnbind 的返回值（bool）
-Clang++
-ccache
+学习 ccache 的用法
 重新解析一个头文件时，如何处理已被删除的符号？
-模板引擎
+×模板引擎：牵涉太大，不大现实
 分类 Headers.lst
 修复内存泄漏
-浮点数转整数
+×浮点数转整数：类型自动提升与收窄很难处理，可以与 Go 语言一般不支持自动类型转换
 启动时检测 Xml/Gen 文件夹是否存在
-保存当前 log 到某个文件
+√保存当前 log 到某个文件
 const 重载 -- X::Func1()
 √当基类有虚函数与非虚函数的重载时，派生类无法调用基类的非虚函数
 允许不绑定特定的纯虚函数
 函数模板的名字中有指针的情况时的代码格式化
+格式化模板声明（逗号、指针符、引用符）
 √文件列表支持 Drag & Drop
-函数指针
 全文本定义的黑名单
-获取 CastXML 的编译错误信息
-
-PyInt 的范围
-
-匿名命名空间
-从派生类读取基类的枚举值
+√获取 CastXML 的编译错误信息
+PyInt 的范围：就是 C++ int 的范围
+?匿名命名空间
+?从派生类读取基类的枚举值
