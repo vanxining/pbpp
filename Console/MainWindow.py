@@ -171,9 +171,23 @@ class MainWindow(wx.Frame):
         self.logger = Logger.ListBoxLogger(self.logger)
         self.logger.logger_ctrl.Bind(wx.EVT_KEY_DOWN, self.on_logger_key_down)
 
-        logging.basicConfig(level=Settings.logging_level,
-                            format="[%(levelname)s] %(message)s",
-                            stream=self.redirector)
+        class NullStream(object):
+            def write(self, msg):
+                pass
+
+            def flush(self):
+                pass
+
+        # It seems that the logging level of the first time config
+        # cannot be lower than the ones of any other handlers attached
+        logging.basicConfig(level=logging.NOTSET, stream=NullStream())
+
+        stream_logger = logging.StreamHandler(stream=self.redirector)
+        stream_logger.setLevel(Settings.logging_level)
+        formatter = logging.Formatter(fmt="[%(levelname)s] %(message)s")
+        stream_logger.setFormatter(formatter)
+
+        logging.getLogger().addHandler(stream_logger)
 
         if Settings.log_debug:
             file_handler = logging.FileHandler(filename=self.log_file_path(),
