@@ -6,7 +6,7 @@ import traceback
 
 
 cd = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(cd[:cd.rindex(os.path.sep)])
+sys.path.insert(0, cd[:cd.rindex(os.path.sep)])
 sys.path = os.environ["PYWX"].split(';') + sys.path
 
 
