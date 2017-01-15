@@ -668,7 +668,11 @@ class MainWindow(wx.Frame):
                 self.logger.select_all()
             elif event.GetKeyCode() == ord('C'):
                 logs = self.logger.get_selections()
-                print(logs)
+
+                if wx.TheClipboard.Open():
+                    wx.TheClipboard.SetData(wx.TextDataObject(logs))
+                    wx.TheClipboard.Close()
+
 
     def on_locate_xml(self, event):
         header_path = self.get_selected_header()
