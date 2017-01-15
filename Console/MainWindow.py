@@ -38,8 +38,12 @@ class Worker(object):
         thread.start_new_thread(self.run, ())
 
     def run(self):
-        with Util.ElapsedTime():
-            self.runnable()
+        # noinspection PyBroadException
+        try:
+            with Util.ElapsedTime():
+                self.runnable()
+        except:
+            logging.exception("Exception occurred:")
 
         event = WorkerFinishEvent()
         event.done_listener = self.done_listener
