@@ -207,12 +207,20 @@ Py_BuildValue = (
     'Py_BuildValue((char *) %(FORMAT)s, %(BUILDER)s(%(CVAL)s))'
 )
 
-PyCapsule_New = (
-    'PyObject *%(PY_VAR_NAME)s = (%(VAR)s) ? PyCapsule_New((void *) %(VAR)s, "%(TYPE_STR)s", nullptr) : Py_None;'
+PyCapsule_New_Ptr = (
+    'PyObject *%(PY_VAR_NAME)s = %(VAR)s ? PyCapsule_New((void *) %(VAR)s, "%(TYPE_STR)s", nullptr) : Py_None;'
 )
 
-PyCapsule_New_RAII = (
-    'pbpp::PyObjectPtr %(PY_VAR_NAME)s((%(VAR)s) ? PyCapsule_New((void *) %(VAR)s, "%(TYPE_STR)s", nullptr) : Py_None);'
+PyCapsule_New_RAII_Ptr = (
+    'pbpp::PyObjectPtr %(PY_VAR_NAME)s(%(VAR)s ? PyCapsule_New((void *) %(VAR)s, "%(TYPE_STR)s", nullptr) : Py_None);'
+)
+
+PyCapsule_New_Ref = (
+    'PyObject *%(PY_VAR_NAME)s = PyCapsule_New((void *) &%(VAR)s, "%(TYPE_STR)s", nullptr);'
+)
+
+PyCapsule_New_RAII_Ref = (
+    'pbpp::PyObjectPtr %(PY_VAR_NAME)s(PyCapsule_New((void *) &%(VAR)s, "%(TYPE_STR)s", nullptr));'
 )
 
 PyCapsule_GetPointer = '''if (py__%(VAR_NAME)s) {

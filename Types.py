@@ -73,7 +73,7 @@ class Type(object):
         return self.decl_no_const() == "bool"
 
     def is_enum(self):
-        return self.tag == "Enumeration"
+        return self.tag == "Enumeration" and len(self.decl_list_no_const) == 1
 
     def is_function_pointer(self):
         return self.tag in ("FunctionType", "MethodType")
@@ -102,7 +102,9 @@ class Type(object):
 
         if self.is_ptr_or_ref():
             secondary_decl = self.decl_list_no_const[-2]
-            if secondary_decl in _built_in or secondary_decl in "&*":
+            if (secondary_decl in _built_in or
+                secondary_decl in "&*" or
+                self.tag == "Enumeration"):
                 return True
 
         return False
@@ -229,6 +231,7 @@ class Type(object):
             return self.cvt.build(self, var_name, py_var_name, namer, raii)
         elif self.is_built_in():
             if self.is_enum():
+                var_name = "static_cast<int>(%s)" % var_name
                 builder = _built_in["int"]["builder"]
             else:
                 builder = _built_in[self.decl_no_const()]["builder"]
@@ -247,15 +250,23 @@ class Type(object):
 
             if self.is_trivial():
                 template_args = {
-                    "VAR": ptr,
+                    "VAR": ref if self.is_ref() else ptr,
                     "PY_VAR_NAME": py_var_name,
                     "TYPE_STR": self.decl_no_const(),
                 }
 
-                if raii:
-                    return Code.Snippets.PyCapsule_New_RAII % template_args
+                if self.is_ref():
+                    if raii:
+                        template = Code.Snippets.PyCapsule_New_RAII_Ref
+                    else:
+                        template = Code.Snippets.PyCapsule_New_Ref
                 else:
-                    return Code.Snippets.PyCapsule_New % template_args
+                    if raii:
+                        template = Code.Snippets.PyCapsule_New_RAII_Ptr
+                    else:
+                        template = Code.Snippets.PyCapsule_New_Ptr
+
+                return template % template_args
             else:
                 assert namer is not None
 

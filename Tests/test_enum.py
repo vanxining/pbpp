@@ -5,10 +5,11 @@ from namer import TestNamer
 
 from .. import CodeBlock
 from .. import Enum
+from .. import Types
 
 
 class TestEnum(unittest.TestCase):
-    def runTest(self):
+    def test_enum(self):
         root = ET.parse("Tests/raw/V.xml").getroot()
         namer = TestNamer()
 
@@ -26,3 +27,32 @@ class TestEnum(unittest.TestCase):
     { "V_OUT", static_cast<int>(V_OUT) },
     {  nullptr }
 };''')
+
+    def test_enum_ptr(self):
+        root = ET.parse("Tests/raw/ENUM_PTR.xml").getroot()
+        namer = TestNamer()
+
+        tp = Types.get_type_by_id("_19", root)
+        self.assertEqual(tp.decl(), "Shape *")
+        self.assertEqual(
+            tp.get_build_value_idecl("shape", namer=namer),
+            'PyObject *py_shape = shape ? PyCapsule_New((void *) shape, "Shape *", nullptr) : Py_None;'
+        )
+
+        tp = Types.get_type_by_id("_23", root)
+        self.assertEqual(tp.decl(), "Color const *")
+        self.assertEqual(
+            tp.get_build_value_idecl("color", namer=namer),
+            'PyObject *py_color = color ? PyCapsule_New((void *) color, "Color *", nullptr) : Py_None;'
+        )
+
+        tp = Types.get_type_by_id("_11", root)
+        self.assertEqual(tp.decl(), "Color &")
+        self.assertEqual(
+            tp.get_build_value_idecl("color", namer=namer),
+            'PyObject *py_color = PyCapsule_New((void *) &color, "Color &", nullptr);'
+        )
+
+    def runTest(self):
+        self.test_enum()
+        self.test_enum_ptr()
