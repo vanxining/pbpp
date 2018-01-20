@@ -102,6 +102,8 @@ class MainWindow(wx.Frame):
                 os.remove(self.current_proj())
                 self.current = self.mod_proj.Project()
 
+        self.ensure_output_directories()
+
         self.batch_castxml_tasks = []
         self.hanging_header = ""
         self.hanging_xml = ""
@@ -204,6 +206,11 @@ class MainWindow(wx.Frame):
             file_handler.setFormatter(formatter)
 
             logging.getLogger().addHandler(file_handler)
+
+    def ensure_output_directories(self):
+        for folder in (self.mod_proj.output_cxx_dir, "%s/Xml" % Settings.proj,):
+            if not os.path.isdir(folder):
+                os.mkdir(folder)
 
     def current_proj(self):
         return Settings.proj + "/Current.pbpp"
