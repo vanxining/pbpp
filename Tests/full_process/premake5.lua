@@ -18,17 +18,17 @@ workspace(_OPTIONS["targetname"])
 
         files { "*.cxx", "*.cpp" }
 
-        if os.get() == "windows" then
+        if os.target() == "windows" then
             targetextension ".pyd"
 
-            local pyroot = _OPTIONS["pyroot"]
+            defines { "_hypot=hypot" } -- Satisfy MinGW-w64
 
-            includedirs { pyroot .. "/include" }
-            libdirs { pyroot .. "/libs" }
+            includedirs { _OPTIONS["pyroot"] .. "/include" }
+            libdirs { _OPTIONS["pyroot"] .. "/libs" }
             links { "python27" }
         end
 
-        if os.get() == "linux" then
+        if os.target() == "linux" then
             targetprefix ""
 
             buildoptions { "`pkg-config python-2.7 --cflags`" }
@@ -36,7 +36,6 @@ workspace(_OPTIONS["targetname"])
         end
 
         defines { "NDEBUG" }
-        optimize "On"
+        optimize "Off"
 
-		filter { "action:gmake" }
-            buildoptions { "-std=c++11" }
+        buildoptions { "-std=c++11" }

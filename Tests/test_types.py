@@ -1,14 +1,9 @@
-import os
 import unittest
 
 from .. import Converters
 from .. import HeaderJar
 from .. import Session
 from .. import Types
-
-
-def current_directory():
-    return os.path.dirname(os.path.realpath(__file__))
 
 
 class TestTypes(unittest.TestCase):
@@ -28,7 +23,7 @@ class TestTypes(unittest.TestCase):
     def test_get_type_by_id(self):
         from xml.etree.ElementTree import parse
 
-        root = parse(current_directory() + "/raw/Y.xml").getroot()
+        root = parse("Tests/raw/Y.xml").getroot()
         if root is not None:
             tp = Types.get_type_by_id("_6576c", root)
             self.assertEqual(tp.decl(), "Y *const")
@@ -38,7 +33,7 @@ class TestTypes(unittest.TestCase):
                              "Y *const_ptr = nullptr;")
 
     def test_declaring_to_assigning(self):
-        from ..Types import Type, declaring_to_assigning
+        from ..Types import declaring_to_assigning
 
         tp = Types.Type(("int",), 11, "FundamentalType")
 

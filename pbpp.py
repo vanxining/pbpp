@@ -17,19 +17,27 @@ def enable_logging():
                         datefmt="%m-%d %H:%M")
 
 
-def run_full_process_tests(args):
+def run_specified_tests(args, module_fmt):
     if not args:
         return
 
     enable_logging()
 
-    sys.path.insert(0,  os.path.abspath(curr_dir() + ".."))
+    sys.path.insert(0, os.path.abspath(curr_dir() + ".."))
 
-    tests = ["pbpp.Tests.full_process.%s.test" % tc for tc in args.testcase]
+    tests = [module_fmt % tc for tc in args.testcase]
     test_suite = unittest.defaultTestLoader.loadTestsFromNames(tests)
 
     runner = unittest.TextTestRunner()
     runner.run(test_suite)
+
+
+def run_simple_unit_tests(args):
+    run_specified_tests(args, "pbpp.Tests.test_%s")
+
+
+def run_full_process_tests(args):
+    run_specified_tests(args, "pbpp.Tests.full_process.%s.test")
 
 
 def run_all_tests(args):
@@ -97,9 +105,13 @@ def main():
     parser = argparse.ArgumentParser("pbpp")
     subparsers = parser.add_subparsers(help="subcommands to perform")
 
-    fp = subparsers.add_parser("fpt", help="run full process unit test(s)")
-    fp.set_defaults(func=run_full_process_tests)
-    fp.add_argument("testcase", nargs='+', help="normally the name of the directory containing `test.py`")
+    ut = subparsers.add_parser("ut", help="run simple unit test(s)")
+    ut.set_defaults(func=run_simple_unit_tests)
+    ut.add_argument("testcase", nargs='+',help="the name of the test (XXX in test_XXX.py)")
+
+    fpt = subparsers.add_parser("fpt", help="run full process unit test(s)")
+    fpt.set_defaults(func=run_full_process_tests)
+    fpt.add_argument("testcase", nargs='+', help="the name of the directory containing `test.py`")
 
     test = subparsers.add_parser("test", help="run all tests")
     test.set_defaults(func=run_all_tests)

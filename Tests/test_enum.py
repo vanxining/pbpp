@@ -1,16 +1,15 @@
 import unittest
-import os
 import xml.etree.ElementTree as ET
 
 from namer import TestNamer
 
-from .. import Enum
 from .. import CodeBlock
+from .. import Enum
 
 
 class TestEnum(unittest.TestCase):
     def runTest(self):
-        root = ET.parse(os.path.dirname(__file__) + "/raw/V.xml").getroot()
+        root = ET.parse("Tests/raw/V.xml").getroot()
         namer = TestNamer()
 
         enum = Enum.Enum()

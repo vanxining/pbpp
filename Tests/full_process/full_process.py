@@ -1,5 +1,6 @@
 import importlib
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -8,7 +9,6 @@ import config
 import customizers
 from ... import Module
 from ... import Registry
-from ... import Util
 from ... import Xml
 
 
@@ -30,17 +30,21 @@ class _TestCase(object):
         )
 
     def _set_up(self):
-        if not os.path.exists(self.tmp_dir) or not os.path.isdir(self.tmp_dir):
+        if not os.path.isdir(self.tmp_dir):
             os.makedirs(self.tmp_dir)
 
-        Util.smart_copy(self.tc_dir + "def.hpp", self.tmp_dir + "def.hpp")
+        shutil.copy(self.tc_dir + "def.hpp", self.tmp_dir + "def.hpp")
         for f in os.listdir(self.tc_dir):
             if f.endswith(".cpp"):
-                Util.smart_copy(self.tc_dir + f, self.tmp_dir + f)
+                shutil.copy(self.tc_dir + f, self.tmp_dir + f)
 
-        Util.smart_copy(self.tc_dir + "../premake5.lua", self.tmp_dir + "premake5.lua")
+        shutil.copy(self.tc_dir + "../premake5.lua", self.tmp_dir + "premake5.lua")
 
         return self.tmp_dir + "def.hpp"
+
+    def _clean(self):
+        if os.path.isdir(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     def _run_castxml(self, fcpp):
         xml_path = self.tmp_dir + os.path.basename(fcpp) + ".xml"
@@ -80,7 +84,7 @@ class _TestCase(object):
             Registry.clear()
 
     def _create_makefile(self):
-        rc = _execute('"%s" gmake --targetname="%s" --pyroot="%s"' % (
+        rc = _execute('"%s" gmake2 --targetname="%s" --pyroot="%s"' % (
             config.premake_bin, self.package_name, config.pyroot
         ))
         assert rc == 0
@@ -91,16 +95,6 @@ class _TestCase(object):
 
     def _import(self):
         return importlib.import_module(self.package_name)
-
-    def _clean(self):
-        obj_file = self.tmp_dir + "obj" + os.path.sep + "def.o"
-        if os.path.exists(obj_file):
-            os.remove(obj_file)
-
-        if os.path.isdir(self.tmp_dir):
-            for f in os.listdir(self.tmp_dir):
-                if f.endswith(".py.cxx") or f.endswith(".cpp"):
-                    os.remove(self.tmp_dir + f)
 
     def _print_header(self):
         msg = "Testing %s... (full process)" % self.package_name
