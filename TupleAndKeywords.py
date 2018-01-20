@@ -17,7 +17,7 @@ class TupleAndKeywords(object):
             assert self.args[-1].defv is None
 
         if not arg.name:
-            arg.name = "unnamed"
+            arg.name = "unnamed"  # TODO: avoid confilit
             if self.unnamed_counter > 0:
                 arg.name += str(self.unnamed_counter)
 

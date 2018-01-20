@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#! python2.7-32
 
 import argparse
 import logging

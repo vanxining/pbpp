@@ -1,3 +1,3 @@
 @echo off
 cls
-python App.py
+App.py

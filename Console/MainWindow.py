@@ -468,7 +468,7 @@ class MainWindow(wx.Frame):
                 if result:
                     logging.info(result)
             except subprocess.CalledProcessError as e:
-                logging.error(e.output)
+                logging.error(e.output.decode())
                 logging.exception(u"Failed to parse `%s`", header_path)
 
         logging.info(u"Parsing `%s`...", header_path)
@@ -683,7 +683,6 @@ class MainWindow(wx.Frame):
                 if wx.TheClipboard.Open():
                     wx.TheClipboard.SetData(wx.TextDataObject(logs))
                     wx.TheClipboard.Close()
-
 
     def on_locate_xml(self, event):
         header_path = self.get_selected_header()
