@@ -24,16 +24,18 @@ class CodeBlock(object):
                 indent = temp_indent
 
             for line in lines:
+                line = line.rstrip()
+
                 if line.startswith("<!"):
-                    line = line[2:].rstrip()
+                    line = line[2:]
                 elif line.startswith(">>>"):
                     indent += 4 * (line.count('>') / 3)
                     continue
                 elif line.startswith("<<<"):
                     indent -= 4 * (line.count('<') / 3)
                     continue
-                else:
-                    line = ' ' * indent + line.rstrip()
+                elif line:
+                    line = ' ' * indent + line
 
                 self.lines.append(line)
 
