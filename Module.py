@@ -564,7 +564,7 @@ class Module(object):
         if not self.modified and os.path.exists(output_path):
             return
 
-        # Return this function with care:
+        # Exit this function with care:
         #   Remember to call Session.end()
         Session.begin(self.header_jar)
 

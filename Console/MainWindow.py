@@ -239,7 +239,7 @@ class MainWindow(wx.Frame):
         return ProjectBase.make_temp_cpp_header(path)
 
     def fill_header_list(self):
-        self.header_list.EnableCheckboxes()
+        self.header_list.EnableCheckBoxes()
 
         w = self.header_list.GetSize().GetX()
         w -= wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X, self)
