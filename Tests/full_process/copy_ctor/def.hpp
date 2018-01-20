@@ -61,6 +61,8 @@ public:
 };
 
 struct H {
+    ~H();
+
     G g;
 };
 

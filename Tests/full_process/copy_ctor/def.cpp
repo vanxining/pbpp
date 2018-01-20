@@ -15,6 +15,12 @@ int F::foo() {
 
 G::G(const G &) {}
 
+#include <cstdio>
+
+H::~H() {
+    printf("H::~H()\n");
+}
+
 F tmp_f() {
     return F();
 }
