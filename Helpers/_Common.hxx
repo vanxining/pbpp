@@ -22,7 +22,7 @@
 namespace pbpp {
 
 /// 修正基类指针偏移
-/// 
+///
 /// 因为 Python 对我们的 C++ 对象（甚至语言）一无所知，当我们在 Python 代码中使用
 /// 一个非主基类的方法/成员变量时，Python 使用的是派生类的 PyObject 对象，其中
 /// 的 cxx_obj 属性是派生类指针。
@@ -37,7 +37,7 @@ enum {
 
     /// C++ 对象的生命周期独立于对应的 Python 对象，且持有 Python 对象的
     /// 一个引用
-    /// 
+    ///
     /// 一般应用场景是 C++ 端需要调用 Python 派生类中的虚函数，此时一个显然的
     /// 要求是我们此时必须保证 Python 对象仍然存在。
     /// 注意：这种情况下 C++ 对象可能先于 Python 对象被析构，此时 Python 对象
@@ -45,7 +45,7 @@ enum {
     CXX = 1 << 1,
 
     /// 借用的 C++ 对象，其生命周期与对应的 Python 对象无关
-    /// 
+    ///
     /// 实际上 C++ 对象与 Python 对象两者的析构时机之间无任何关系。
     BORROWED = 1 << 2,
 };
@@ -62,7 +62,7 @@ int GetMethodArgsCount(PyObject *py_method);
 PyObject *PackAsTuple(const std::initializer_list<int> &numbers);
 
 /// 自动销毁一个异常对象数组
-/// 
+///
 /// 为支持函数重载，我们在解析函数参数时临时保存了尝试某个重载失败时
 /// PyArg_ParseTupleAndKeywords() 给出的参数类型不匹配异常对象。
 /// 这个类的目的就是从包裹函数返回时自动销毁这些缓存对象。
@@ -86,7 +86,7 @@ private:
 void CachePythonException(PyObject **exception);
 
 /// 将缓存的异常对象数组转发到 Python
-/// 
+///
 /// 代表没有合适的重载调用。
 void RestorePythonExceptions(PyObject **exceptions, int n);
 
@@ -95,17 +95,17 @@ void RestorePythonExceptions(PyObject **exceptions, int n);
 namespace Types {
 
 /// 是否为整数
-/// 
+///
 /// 包括 PyInt (Python 2.x) 以及 PyLong。
 bool IsInteger(PyObject *obj);
 
 /// 是否为数字
-/// 
+///
 /// 包括 PyInt (Python 2.x), PyLong, PyFloat。
 bool IsNumber(PyObject *obj);
 
 /// 转换为整形
-/// 
+///
 /// 不会检查 @a obj 是否确实为一个数字。
 /// @return 若返回 -1，需要调用者检查是否出现了错误还是正确结果确实是 -1。
 int ToInt(PyObject *obj);
@@ -135,12 +135,12 @@ short ToShort(PyObject *obj);
 unsigned short ToUnsignedShort(PyObject *obj);
 
 /// 转换为 wchar_t
-/// 
+///
 /// 没有 unsigned wchar_t。
 wchar_t ToWChar(PyObject *obj);
 
 /// 转换为 char
-/// 
+///
 char ToChar(PyObject *obj);
 
 /// 转换为 unsigned char
@@ -173,7 +173,7 @@ public:
 };
 
 /// 从 C++ 调用 Python 函数出现错误
-/// 
+///
 /// 可能的原因有返回值或参数类型、个数不匹配。
 class CallPyMethodError : public CxxException {
 public:
@@ -257,7 +257,7 @@ void RegisterEnumValues(EnumValue *val, PyObject *tp_dict);
  * https://docs.python.org/3/c-api/init.html?highlight=pygilstate_check#c.PyGILState_Check
  * It can be useful in debugging deadlocks/crashes in python-c api
  * usage by checking whether the GIL is acquired or not where expected.
- * 
+ *
  * From: https://github.com/pankajp/pygilstate_check
  */
 #if PY_VERSION_HEX < 0x03000000
@@ -276,7 +276,7 @@ inline void EndAllowThreads(PyThreadState *saved) {
 }
 
 // Calls from C++ back to Python code, or even any PyObject
-// manipulations, PyDECREF's and etc. are wrapped in calls to 
+// manipulations, PyDECREF's and etc. are wrapped in calls to
 // these functions:
 
 PyGILState_STATE BeginBlockThreads();

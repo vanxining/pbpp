@@ -4,7 +4,7 @@
 namespace Python {
 
     /// 实现 Python 的 map 类型与某一 C++ 等价类型之间的转换
-    template <class Cont, 
+    template <class Cont,
               typename KeyExtractor, typename KeyBuilder,
               typename ValExtractor, typename ValBuilder>
     class Dict : public Container<Cont> {
@@ -17,7 +17,7 @@ namespace Python {
              KeyExtractor key_extractor, KeyBuilder key_builder,
              ValExtractor val_extractor, ValBuilder val_builder)
                 : Super(obj, type),
-                  m_key_extrator(key_extractor), 
+                  m_key_extrator(key_extractor),
                   m_key_builder(key_builder),
                   m_val_extrator(val_extractor),
                   m_val_builder(val_builder) {
@@ -59,7 +59,7 @@ namespace Python {
             for (auto &kv : Super::m_cont) {
                 PyObject *py_key = nullptr, *py_value = nullptr;
 
-                if (m_key_builder(kv.first, py_key) && 
+                if (m_key_builder(kv.first, py_key) &&
                     m_val_builder(kv.second, py_value)) {
                         PyDict_SetItem(Super::m_obj, py_key, py_value);
                         Py_DECREF(py_key);

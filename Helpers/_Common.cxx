@@ -145,7 +145,7 @@ unsigned int ToUnsignedInt(PyObject *obj) {
 
     if (result > UINT_MAX) {
         PyErr_SetString(PyExc_OverflowError, ERROR_MSG(unsigned int));
-        
+
         return -1;
     }
 

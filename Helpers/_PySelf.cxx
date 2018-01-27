@@ -23,7 +23,7 @@ void _PySelf::SetSelf(PyObject *self, bool clone) {
     if (m_self && m_cloned) {
         Py_DECREF(m_self);
     }
-    
+
     m_self = self;
     m_cloned = false;
 

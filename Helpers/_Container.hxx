@@ -2,7 +2,7 @@
 #include "_Python.hxx"
 
 namespace Python {
-    
+
     template <class T>
     struct const_ref {
         typedef const T &type;

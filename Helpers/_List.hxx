@@ -2,7 +2,7 @@
 #include "_Container.hxx"
 
 namespace Python {
-    
+
     /// 实现 Python 的 list 类型与某一 C++ 等价类型之间的转换
     template <class Cont, typename Extractor, typename Builder>
     class List : public Container<Cont> {
@@ -11,9 +11,9 @@ namespace Python {
         typedef Container<Cont> Super;
 
         /// 构造函数
-        List(PyObject *obj, 
-             ReferenceType type, 
-             Extractor extrator, 
+        List(PyObject *obj,
+             ReferenceType type,
+             Extractor extrator,
              Builder builder)
                 : Super(obj, type),
                   m_item_extrator(extrator),
