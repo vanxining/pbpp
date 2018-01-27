@@ -146,6 +146,12 @@ char ToChar(PyObject *obj);
 /// 转换为 unsigned char
 unsigned char ToUnsignedChar(PyObject *obj);
 
+/// 常量引用转为指针
+template <typename T>
+inline T *ToPointer(const T &ref) {
+    return &const_cast<T &>(ref);
+}
+
 } // namespace Types
 
 //////////////////////////////////////////////////////////////////////////

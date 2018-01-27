@@ -29,25 +29,31 @@ class TestEnum(unittest.TestCase):
 };''')
 
     def test_enum_ptr(self):
-        root = ET.parse("Tests/raw/ENUM_PTR.xml").getroot()
         namer = TestNamer()
 
-        tp = Types.get_type_by_id("_19", root)
+        tp = Types.Type(("Shape", "*",), 0, "Enumeration")
         self.assertEqual(tp.decl(), "Shape *")
         self.assertEqual(
             tp.get_build_value_idecl("shape", namer=namer),
             'PyObject *py_shape = shape ? PyCapsule_New((void *) shape, "Shape *", nullptr) : Py_None;'
         )
 
-        tp = Types.get_type_by_id("_23", root)
+        tp = Types.Type(("Color", "const", "*",), 0, "Enumeration")
         self.assertEqual(tp.decl(), "Color const *")
         self.assertEqual(
             tp.get_build_value_idecl("color", namer=namer),
             'PyObject *py_color = color ? PyCapsule_New((void *) color, "Color *", nullptr) : Py_None;'
         )
 
-        tp = Types.get_type_by_id("_11", root)
+        tp = Types.Type(("Color", "&",), 0, "Enumeration")
         self.assertEqual(tp.decl(), "Color &")
+        self.assertEqual(
+            tp.get_build_value_idecl("color", namer=namer),
+            'PyObject *py_color = PyCapsule_New((void *) &color, "Color &", nullptr);'
+        )
+
+        tp = Types.Type(("Color", "const", "&",), 0, "Enumeration")
+        self.assertEqual(tp.decl(), "Color const &")
         self.assertEqual(
             tp.get_build_value_idecl("color", namer=namer),
             'PyObject *py_color = PyCapsule_New((void *) &color, "Color &", nullptr);'

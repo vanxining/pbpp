@@ -19,3 +19,7 @@ Color use_color_ref(ColorRef color) {
     color = Color::RED;
     return color;
 }
+
+Color use_color_const_ref(const Color &color) {
+    return color;
+}

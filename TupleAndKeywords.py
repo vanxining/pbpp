@@ -177,12 +177,13 @@ class TupleAndKeywords(object):
                         to_cxx.append(arg.type.declare_var(arg.name, init_expr))
                     else:
                         var_ptr = "py_cxx_%s_ptr" % arg.name
-                        to_cxx.append(cpp_ptr_type.declare_var(var_ptr, "&(%s)" % arg.defv))
+                        init_expr = "pbpp::Types::ToPointer(%s)" % arg.defv
+                        to_cxx.append(cpp_ptr_type.declare_var(var_ptr, init_expr))
 
                         to_cxx.append("if (py__%s) {" % arg.name)
                         to_cxx.append(">>>")
                         to_cxx += capsule_ensure_reference
-                        to_cxx.append(var_ptr + ' = (%s) PyCapsule_GetPointer(py__%s, "%s")' % (
+                        to_cxx.append(var_ptr + ' = (%s) PyCapsule_GetPointer(py__%s, "%s");' % (
                             cpp_ptr_type, arg.name, arg.type.decl_no_const(),
                         ))
                         to_cxx.append("<<<")

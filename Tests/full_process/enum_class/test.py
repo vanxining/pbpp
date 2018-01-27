@@ -12,3 +12,5 @@ class TestEnumClass(unittest.TestCase):
 
         self.assertEqual(m.use_color(m.get_color()), m.Color.BLUE)
         self.assertEqual(m.use_color_ref(m.get_color_ref()), m.Color.RED)
+        self.assertEqual(m.use_color_const_ref(), m.Color.BLUE)
+        self.assertEqual(m.use_color_const_ref(m.get_color_ref()), m.Color.RED)
