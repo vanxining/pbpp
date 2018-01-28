@@ -278,7 +278,9 @@ auto py_%(VAR_NAME)s_item_builder = [](Python::const_ref<%(ITEM_TYPE)s>::type it
 %(BUILDER)s
 <<<
 };
-Python::List<%(CONTAINER_TYPE)s, decltype(py_%(VAR_NAME)s_item_extractor), decltype(py_%(VAR_NAME)s_item_builder)>
+Python::List<%(CONTAINER_TYPE)s,
+             decltype(py_%(VAR_NAME)s_item_extractor),
+             decltype(py_%(VAR_NAME)s_item_builder)>
     %(VAR_NAME)s(%(PY_VAR_NAME)s, Python::%(REFERENCE_TYPE)s, py_%(VAR_NAME)s_item_extractor, py_%(VAR_NAME)s_item_builder);
 %(SET_DEFAULT_VALUE)sif (!%(VAR_NAME)s.ConvertFromPython()) {
 >>>
@@ -333,11 +335,7 @@ Python::Dict<%(CONTAINER_TYPE)s,
              decltype(py_%(VAR_NAME)s_key_builder),
              decltype(py_%(VAR_NAME)s_val_extractor),
              decltype(py_%(VAR_NAME)s_val_builder)>
-    %(VAR_NAME)s(%(PY_VAR_NAME)s, Python::%(REFERENCE_TYPE)s,
-        py_%(VAR_NAME)s_key_extractor,
-        py_%(VAR_NAME)s_key_builder,
-        py_%(VAR_NAME)s_val_extractor,
-        py_%(VAR_NAME)s_val_builder);
+    %(VAR_NAME)s(%(PY_VAR_NAME)s, Python::%(REFERENCE_TYPE)s, py_%(VAR_NAME)s_key_extractor, py_%(VAR_NAME)s_key_builder, py_%(VAR_NAME)s_val_extractor, py_%(VAR_NAME)s_val_builder);
 %(SET_DEFAULT_VALUE)sif (!%(VAR_NAME)s.ConvertFromPython()) {
 >>>
 %(ERROR_RETURN)s
@@ -496,8 +494,7 @@ def virtual_method_wrapper_header(pure_virtual):
 pbpp::PyObjectPtr py_method(PyObject_GetAttrString((PyObject *) self, (char *) "%%(MNAME)s"));
 PyErr_Clear();
 
-if (!py_method || Py_TYPE(py_method) == &PyCFunction_Type ||
-     pbpp::GetMethodArgsCount(py_method) != (%%(ARGS_COUNT)d + 1)) {
+if (!py_method || Py_TYPE(py_method) == &PyCFunction_Type) {
         py_method.release();
         PBPP_DISABLE_THREAD_BLOCKER
         %s

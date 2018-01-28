@@ -21,7 +21,7 @@ class Type(object):
         assert isinstance(tid, int)
         assert isinstance(tag, str)
 
-        self.decl_list = decl_list
+        self.decl_list = tuple(d.replace("> >", ">>") for d in decl_list)
         self.decl_list_no_const = [d for d in decl_list if d != "const"]
         self.tid = tid
         self.tag = tag

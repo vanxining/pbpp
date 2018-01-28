@@ -65,4 +65,5 @@ namespace Python {
         Extractor m_item_extrator;
         Builder m_item_builder;
     };
+
 }

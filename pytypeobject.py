@@ -14,7 +14,7 @@ class PyTypeObject(object):
         '    (printfunc) 0, /* tp_print */\n'
         '    (getattrfunc) %(tp_getattr)s, /* tp_getattr */\n'
         '    (setattrfunc) %(tp_setattr)s, /* tp_setattr */\n'
-        '    (cmpfunc) %(tp_compare)s, /* tp_compare */\n'
+        '     nullptr, /* tp_compare, tp_as_async */\n'
         '    (reprfunc) %(tp_repr)s, /* tp_repr */\n'
         '    (PyNumberMethods *) %(tp_as_number)s, /* tp_as_number */\n'
         '    (PySequenceMethods *) %(tp_as_sequence)s, /* tp_as_sequence */\n'
@@ -33,8 +33,8 @@ class PyTypeObject(object):
         '     %(tp_weaklistoffset)s, /* tp_weaklistoffset */\n'
         '    (getiterfunc) %(tp_iter)s, /* tp_iter */\n'
         '    (iternextfunc) %(tp_iternext)s, /* tp_iternext */\n'
-        '    (struct PyMethodDef *) %(tp_methods)s, /* tp_methods */\n'
-        '    (struct PyMemberDef *) nullptr, /* tp_members */\n'
+        '    (PyMethodDef *) %(tp_methods)s, /* tp_methods */\n'
+        '    (PyMemberDef *) nullptr, /* tp_members */\n'
         '     %(tp_getset)s, /* tp_getset */\n'
         '     nullptr, /* tp_base */\n'
         '     nullptr, /* tp_dict */\n'
@@ -64,7 +64,8 @@ class PyTypeObject(object):
         slots.setdefault('tp_dealloc', 'nullptr')
         slots.setdefault('tp_getattr', 'nullptr')
         slots.setdefault('tp_setattr', 'nullptr')
-        slots.setdefault('tp_compare', 'nullptr')
+        slots.setdefault('tp_compare', 'nullptr')  # Python 2
+        slots.setdefault('tp_as_async', 'nullptr')  # Python 3
         slots.setdefault('tp_repr', 'nullptr')
         slots.setdefault('tp_as_number', 'nullptr')
         slots.setdefault('tp_as_sequence', 'nullptr')

@@ -113,10 +113,11 @@ class StrConv(Converter):
         return False
 
     def negative_checker(self, cpp_type, py_var_name):
-        return "!PyString_Check(%s)" % py_var_name
+        return "!PyString_Check({})".format(py_var_name)
 
     def extracting_code(self, cpp_type, var_name, py_var_name, error_return, namer):
-        return var_name + " = PyString_AsString(%s);" % py_var_name
+        return ("pbpp::Types::ConstCharPtr {0}_ccp({0});\n"
+                "{1} = (const char *) {0}_ccp;").format(py_var_name, var_name)
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
         common_part = "PyString_FromString({})"
@@ -139,7 +140,7 @@ class WcsConv(Converter):
     def args_parsing_declare_vars(self, cpp_type, var_name, defv=None):
         init_expr = "nullptr"
         if defv is not None:
-            init_expr = "(%s) " % cpp_type.decl() + defv
+            init_expr = "({}) {}".format(cpp_type.decl(), defv)
 
         return cpp_type.declare_var(var_name, init_expr)
 
@@ -153,13 +154,38 @@ class WcsConv(Converter):
         return False
 
     def negative_checker(self, cpp_type, py_var_name):
-        return "!PyUnicode_Check(%s)" % py_var_name
+        return "!PyUnicode_Check({})".format(py_var_name)
 
     def extracting_code(self, cpp_type, var_name, py_var_name, error_return, namer):
-        return var_name + " = (const wchar_t *) PyUnicode_AsUnicode(%s);" % py_var_name
+        return ("pbpp::Types::ConstWcharPtr {0}_cwcp({0});\n"
+                "{1} = (const wchar_t *) {0}_cwcp;").format(py_var_name, var_name)
 
     def build(self, cpp_type, var_name, py_var_name, namer, raii):
         common_part = "PyUnicode_FromWideChar({1}, wcslen({1}))"
+        boilerplate = "pbpp::PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
+
+        return boilerplate.format(common_part).format(py_var_name, var_name)
+
+
+class WstringConv(WcsConv):
+    def __init__(self):
+        Converter.__init__(self)
+
+    def match(self, cpp_type):
+        if cpp_type.intrinsic_type().startswith("std::basic_string<wchar_t,"):
+            if cpp_type.is_const() or not cpp_type.has_decorators():
+                return True
+
+        return False
+
+    def extracting_code(self, cpp_type, var_name, py_var_name, error_return, namer):
+        return ("pbpp::Types::ConstWcharPtr {0}_cwcp({0});\n"
+                "{1}((const wchar_t *) {0}_cwcp);").format(
+            py_var_name, cpp_type.join_type_and_name(var_name)
+        )
+
+    def build(self, cpp_type, var_name, py_var_name, namer, raii):
+        common_part = "PyUnicode_FromWideChar({1}.c_str(), {1}.length())"
         boilerplate = "pbpp::PyObjectPtr {{0}}({});" if raii else "PyObject *{{0}} = {};"
 
         return boilerplate.format(common_part).format(py_var_name, var_name)

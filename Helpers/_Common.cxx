@@ -1,6 +1,7 @@
 #include "_Common.hxx"
 
 #include <cassert>
+#include <cstdint>
 
 #ifndef HAVE_USABLE_WCHAR_T
 static_assert(sizeof(wchar_t) == sizeof(PY_UNICODE_TYPE), "Please report this bug!");
@@ -16,18 +17,6 @@ struct StdLayout {
     pbpp::flag_t flags;
 };
 
-int GetMethodArgsCount(PyObject *py_method) {
-    PyObjectPtr func_code(PyObject_GetAttrString(py_method, (char *) "func_code"));
-    if (func_code) {
-        PyObjectPtr co_argcount(PyObject_GetAttrString(func_code, (char *) "co_argcount"));
-        if (co_argcount) {
-            return PyInt_AsSsize_t(co_argcount);
-        }
-    }
-
-    return -1;
-}
-
 PyObject *PackAsTuple(const std::initializer_list<int> &numbers) {
     PyObject *ret = PyTuple_New(numbers.size());
     if (!ret) {
@@ -35,7 +24,7 @@ PyObject *PackAsTuple(const std::initializer_list<int> &numbers) {
     }
 
     int i = 0;
-    for (auto n : numbers) {
+    for (int n : numbers) {
         PyTuple_SET_ITEM(ret, i++, PyInt_FromLong(n));
     }
 
@@ -43,9 +32,7 @@ PyObject *PackAsTuple(const std::initializer_list<int> &numbers) {
 }
 
 ExceptionArrayDestructor::ExceptionArrayDestructor(PyObject **exceptions)
-    : exceptions(exceptions) {
-
-}
+    : exceptions(exceptions) {}
 
 ExceptionArrayDestructor::~ExceptionArrayDestructor() {
     PyObject **p = exceptions;
@@ -114,8 +101,8 @@ long long ToLongLong(PyObject *obj) {
 
 unsigned long long ToUnsignedLongLong(PyObject *obj) {
 #if PY_MAJOR_VERSION == 2
-    /* The PyLong_AsUnsignedLongLong doesn't check the type of
-     * obj, only accept argument of PyLong_Type, so we check it instead.
+    /* The PyLong_AsUnsignedLongLong doesn't check the type of obj,
+     * only accept argument of PyLong_Type, so we check it instead.
      */
     if (PyInt_Check(obj)) {
         return PyLong_AsUnsignedLong(obj);
@@ -127,12 +114,8 @@ unsigned long long ToUnsignedLongLong(PyObject *obj) {
 
 #define ERROR_MSG(T) "Python int too large to convert to C/C++ " #T
 
-#if PY_VERSION_HEX >= 0x03000000
-#   define _PyInt_AsInt _PyLong_AsInt
-#endif
-
 int ToInt(PyObject *obj) {
-    return _cast(obj, _PyInt_AsInt(obj));
+    return _cast(obj, PyInt_AsSsize_t(obj));
 }
 
 unsigned int ToUnsignedInt(PyObject *obj) {
@@ -164,14 +147,14 @@ double ToDouble(PyObject *obj) {
 }
 
 template <typename T, int MAX, int MIN>
-T _cast_down(PyObject *obj, const char *errMsg) {
+T _cast_down(PyObject *obj, const char *error_msg) {
     int result = ToInt(obj);
     if (result == -1 && PyErr_Occurred()) {
         return -1;
     }
 
     if (result > MAX || result < MIN) {
-        PyErr_SetString(PyExc_OverflowError, errMsg);
+        PyErr_SetString(PyExc_OverflowError, error_msg);
 
         return -1;
     }
@@ -267,7 +250,7 @@ void ThreadBlocker::Disable() {
     m_disabled = true;
 }
 
-#endif
+#endif // PBPP_SUPPORT_THREAD
 
 CxxException::CxxException(PyObject *exception, const char *desc)
     : exception(exception), desc(desc) {
@@ -286,4 +269,66 @@ EXCEPTION_CTOR(CallPyMethodError, PyExc_RuntimeError)
 EXCEPTION_CTOR(NullReferenceError, PyExc_ReferenceError)
 EXCEPTION_CTOR(ArgumentTypeError, PyExc_TypeError)
 
+namespace Types {
+
+ConstCharPtr::ConstCharPtr(PyObject *obj) {
+#if PY_VERSION_HEX >= 0x03000000
+    m_bytes = PyUnicode_AsMBCSString(obj);
+#else
+    m_obj = obj;
+#endif
+}
+
+ConstCharPtr::~ConstCharPtr() {
+#if PY_VERSION_HEX >= 0x03000000
+    if (m_bytes) {
+        Py_DECREF(m_bytes);
+        m_bytes = nullptr;
+    }
+#endif
+}
+
+ConstCharPtr::operator const char *() const {
+#if PY_VERSION_HEX >= 0x03000000
+    return m_bytes ? PyBytes_AsString(m_bytes) : nullptr;
+#else
+    return PyString_AsString(m_obj);
+#endif
+}
+
+ConstWcharPtr::ConstWcharPtr(PyObject *unicode) {
+#if PY_VERSION_HEX >= 0x03000000
+    m_buf = PyUnicode_AsWideCharString(unicode, nullptr);
+#else
+    m_obj = unicode;
+#endif
+}
+
+ConstWcharPtr::~ConstWcharPtr() {
+#if PY_VERSION_HEX >= 0x03000000
+    if (m_buf) {
+        PyMem_Free(m_buf);
+        m_buf = nullptr;
+    }
+#endif
+}
+
+ConstWcharPtr::operator const wchar_t *() const {
+#if PY_VERSION_HEX >= 0x03000000
+    return m_buf;
+#else
+    return PyUnicode_AsUnicode(m_obj);
+#endif
+}
+
+} // namespace Types
+
 } // namespace pbpp
+
+#if PY_VERSION_HEX >= 0x03000000
+
+PyObject *PyString_FromString(const char *s) {
+    return PyUnicode_DecodeMBCS(s, strlen(s), nullptr);
+}
+
+#endif

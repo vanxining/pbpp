@@ -55,9 +55,6 @@ typedef unsigned char flag_t;
 
 //////////////////////////////////////////////////////////////////////////
 
-/// 获取函数对象的参数个数
-int GetMethodArgsCount(PyObject *py_method);
-
 /// 将一组数字打包成 Python 元组
 PyObject *PackAsTuple(const std::initializer_list<int> &numbers);
 
@@ -192,6 +189,7 @@ public:
 class NullReferenceError : public CxxException {
 public:
 
+    /// 构造函数
     NullReferenceError(const char *desc);
 };
 
@@ -330,3 +328,67 @@ private:
 #define PBPP_DISABLE_THREAD_BLOCKER
 
 #endif
+
+#if PY_VERSION_HEX >= 0x03000000
+
+#define PyInt_AsSsize_t PyLong_AsSsize_t
+#define PyInt_FromSsize_t PyLong_FromSsize_t
+#define PyInt_FromSize_t PyLong_FromSize_t
+#define PyInt_FromLong PyLong_FromLong
+
+#define PyString_Check PyUnicode_Check
+PyObject *PyString_FromString(const char *s);
+
+#endif // PY_VERSION_HEX >= 0x03000000
+
+namespace pbpp {
+
+namespace Types {
+
+/// 常量字符串指针包裹器
+class ConstCharPtr {
+public:
+
+    /// 构造函数
+    ConstCharPtr(PyObject *obj);
+
+    /// 析构函数
+    ~ConstCharPtr();
+
+    /// 类型转换函数
+    operator const char *() const;
+
+private:
+
+#if PY_VERSION_HEX >= 0x03000000
+    PyObject *m_bytes;
+#else
+    PyObject *m_obj;
+#endif
+};
+
+/// 常量宽字符串指针包裹器
+class ConstWcharPtr {
+public:
+
+    /// 构造函数
+    ConstWcharPtr(PyObject *unicode);
+
+    /// 析构函数
+    ~ConstWcharPtr();
+
+    /// 类型转换函数
+    operator const wchar_t *() const;
+
+private:
+
+#if PY_VERSION_HEX >= 0x03000000
+    wchar_t *m_buf;
+#else
+    PyObject *m_obj;
+#endif
+};
+
+} // namespace Types
+
+} // namespace pbpp
